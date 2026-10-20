@@ -113,8 +113,17 @@
         <button @click="nextWeek()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg transition"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
         <button @click="goToday()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">Semana atual</button>
       </div>
-      <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
-        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(resumo.est.D.ei)+' t','','text-emerald-700'],['SALDO DO DIA — POROSO',fmt1(resumo.est.P.ei)+' t','','text-orange-700'],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <!-- SALDO DO DIA: Denso + Poroso em um card -->
+        <div class="rounded-lg p-2 border border-stone-200 bg-stone-50">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight">SALDO DO DIA</p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-lg font-extrabold text-emerald-700" x-text="fmt1(resumo.est.D.ei)+' t'"></p></div>
+            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-lg font-extrabold text-orange-700" x-text="fmt1(resumo.est.P.ei)+' t'"></p></div>
+          </div>
+        </div>
+        <!-- AUTONOMIA (inalterada) -->
+        <template x-for="c in [['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')]]" :key="c[0]">
           <div class="rounded-lg p-2" :class="c[4]?(c[3].includes('emerald')?'border-2 border-emerald-300 bg-emerald-50/60 shadow-sm':'border-2 border-orange-300 bg-orange-50/60 shadow-sm'):'border border-stone-200 bg-stone-50'">
             <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
             <p x-show="c[4]" class="text-[11px] font-bold uppercase tracking-wide" :class="c[3]" x-text="c[5]"></p>
@@ -122,6 +131,14 @@
             <p x-show="c[2]" :class="c[4]?'text-[11px] text-stone-500 font-medium':'text-[11px] text-stone-400'" x-text="c[2]"></p>
           </div>
         </template>
+        <!-- MÉDIA DE CONSUMO: Denso + Poroso em um card -->
+        <div class="rounded-lg p-2 border-2 border-stone-300 bg-stone-50/60 shadow-sm">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight">MÉDIA CONSUMO <span class="font-bold uppercase tracking-wide text-stone-600">· média 7 dias</span></p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-xl font-extrabold" :class="media7(rD)>limAlerta?'text-red-600':'text-emerald-700'" x-text="media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—'"></p></div>
+            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-xl font-extrabold" :class="media7(rP)>limAlerta?'text-red-600':'text-orange-700'" x-text="media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—'"></p></div>
+          </div>
+        </div>
       </div>
       <div class="overflow-auto rounded-lg border border-stone-200">
         <table class="border-collapse tbl-resumo">
@@ -232,13 +249,15 @@
       <button @click="addSemana()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-plus"/></svg>Adicionar dias</button>
     </div>
 
-    <!-- PROGRAMADO A RECEBER -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-      <template x-for="c in cardReceber" :key="c[0]">
-        <div class="rounded-lg p-2 border-2 shadow-sm" :class="c[0].startsWith('Denso')?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
-          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'">Programado a receber</p>
-          <p class="text-xl font-extrabold" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'" x-text="c[1]+(c[0].includes('Peso')?' t':'')"></p>
+    <!-- PROGRAMADO A RECEBER: 1 card por produto (peso em cima, veículos embaixo, datas de entrega) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <template x-for="c in cardReceber" :key="c.nome">
+        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="c.nome==='Denso'?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c.nome.toUpperCase()"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'">Programado a receber</p>
+          <p class="text-xl font-extrabold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.peso+' t'"></p>
+          <p class="text-base font-bold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.veic+(c.veic==='1'?' veículo':' veículos')"></p>
+          <p x-show="c.datas" class="text-[11px] text-stone-500 font-medium mt-0.5" x-text="c.datas"></p>
         </div>
       </template>
     </div>
@@ -788,10 +807,15 @@ function sys(){
     },
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
-    get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[];
-      [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{let ult=-1;this.dias.forEach((d,i)=>{if(has(d[p][3]))ult=i;});let t=0,v=0;
-        for(let j=ult+1;j<this.dias.length;j++){const a=this.dias[j][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);}}
-        out.push([nome+' — Peso total',f(t)],[nome+' — Veículos',String(v)]);});return out;},
+    get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[],fd=x=>this.fmtDateBR(x).slice(0,5);
+      [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{
+        /* data de entrega mais recente com Entrega Executada preenchida (coluna + 7 dias) */
+        let ultEnt='';this.dias.forEach(d=>{if(has(d[p][3])){const e=this.addDays(d.iso,7);if(e>ultEnt)ultEnt=e;}});
+        let t=0,v=0;const ds=[];
+        /* conta somente colunas cuja entrega cai DEPOIS da última entrega executada preenchida */
+        this.dias.forEach(d=>{const a=d[p],e=this.addDays(d.iso,7);if(e>ultEnt&&has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(e);}});
+        ds.sort();const datas=!ds.length?'':ds[0]===ds[ds.length-1]?'entrega '+fd(ds[0]):'entrega de '+fd(ds[0])+' a '+fd(ds[ds.length-1]);
+        out.push({nome,peso:f(t),veic:String(v),datas});});return out;},
     get cardSemanas(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       return [...this.weeksList].map(w=>{const s={D:[0,0],P:[0,0]};
         for(let k=0;k<7;k++){const iso=this.addDays(w,k),d=this.dias.find(x=>x.iso===iso);if(!d)continue;['D','P'].forEach(p=>{const x=d[p][2];if(has(x)){s[p][0]+=+x;s[p][1]+=this.vei(x);}});}
