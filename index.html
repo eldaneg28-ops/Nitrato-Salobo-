@@ -122,6 +122,14 @@
             <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-lg font-extrabold text-orange-700" x-text="fmt1(resumo.est.P.ei)+' t'"></p></div>
           </div>
         </div>
+        <!-- MÉDIA DE CONSUMO: Denso + Poroso em um card -->
+        <div class="rounded-lg p-2 border-2 border-stone-300 bg-stone-50/60 shadow-sm">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight">MÉDIA CONSUMO <span class="font-bold uppercase tracking-wide text-stone-600">· média 7 dias</span></p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-xl font-extrabold" :class="media7(rD)>limAlerta?'text-red-600':'text-emerald-700'" x-text="media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—'"></p></div>
+            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-xl font-extrabold" :class="media7(rP)>limAlerta?'text-red-600':'text-orange-700'" x-text="media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—'"></p></div>
+          </div>
+        </div>
         <!-- AUTONOMIA (inalterada) -->
         <template x-for="c in [['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')]]" :key="c[0]">
           <div class="rounded-lg p-2" :class="c[4]?(c[3].includes('emerald')?'border-2 border-emerald-300 bg-emerald-50/60 shadow-sm':'border-2 border-orange-300 bg-orange-50/60 shadow-sm'):'border border-stone-200 bg-stone-50'">
@@ -131,14 +139,6 @@
             <p x-show="c[2]" :class="c[4]?'text-[11px] text-stone-500 font-medium':'text-[11px] text-stone-400'" x-text="c[2]"></p>
           </div>
         </template>
-        <!-- MÉDIA DE CONSUMO: Denso + Poroso em um card -->
-        <div class="rounded-lg p-2 border-2 border-stone-300 bg-stone-50/60 shadow-sm">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight">MÉDIA CONSUMO <span class="font-bold uppercase tracking-wide text-stone-600">· média 7 dias</span></p>
-          <div class="grid grid-cols-2 gap-2 mt-1">
-            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-xl font-extrabold" :class="media7(rD)>limAlerta?'text-red-600':'text-emerald-700'" x-text="media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—'"></p></div>
-            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-xl font-extrabold" :class="media7(rP)>limAlerta?'text-red-600':'text-orange-700'" x-text="media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—'"></p></div>
-          </div>
-        </div>
       </div>
       <div class="overflow-auto rounded-lg border border-stone-200">
         <table class="border-collapse tbl-resumo">
@@ -171,42 +171,42 @@
       <p class="text-[11px] text-stone-500 flex flex-wrap gap-x-4 gap-y-1"><span><span class="inline-block w-3 h-3 bg-rose-100 border border-rose-400 rounded-sm align-middle"></span> <b>Consumo planejado</b></span><span><span class="inline-block w-3 h-3 bg-violet-100 border border-violet-400 rounded-sm align-middle"></span> <b>Entrega planejada</b></span><span><span class="inline-block w-3 h-3 bg-sky-100 border border-sky-400 rounded-sm align-middle"></span> <b>Veículos</b></span><span><b>NET</b></span><span><b>Estoque inicial</b></span><span><b>Autonomia</b></span></p>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-      <template x-for="k in kpis()" :key="k.titulo">
-        <div class="bg-white p-2.5 rounded-lg border border-stone-200 shadow-sm hover:shadow-md transition duration-300">
-          <div class="flex items-center justify-between mb-0.5">
-            <span class="text-[10px] font-medium text-stone-500 leading-tight" x-text="k.titulo"></span>
-            <span class="p-1 rounded-md" :class="k.ib"><svg class="ic" :class="k.ic"><use :href="'#i-'+k.icone"/></svg></span>
-          </div>
-          <p class="text-lg font-extrabold" :class="k.cor" x-text="k.valor"></p>
-          <p x-show="k.sub" class="text-[11px] text-stone-500 mt-0.5" x-text="k.sub"></p>
+    <!-- QUANTIDADE PROGRAMADA POR SEMANA (só aparece quando uma semana é escolhida) -->
+    <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-violet-100 text-violet-700"><svg class="ic"><use href="#i-calendar-days"/></svg></span>
+          <h3 class="text-sm font-bold text-stone-800">Quantidade programada por semana</h3>
         </div>
-      </template>
-    </div>
-    <div class="bg-white rounded-lg border border-stone-200 shadow-sm p-3">
-      <div class="flex flex-wrap items-center gap-2 mb-2">
-        <p class="text-xs font-bold text-stone-700">Quantidade programada por semana</p>
-        <select x-model="filtroSemana" class="ml-auto px-2 py-1 border border-stone-300 rounded-lg text-xs font-semibold bg-white">
-          <option value="todas">Todas as semanas</option>
+        <select x-model="filtroSemana" class="ml-auto px-3 py-2 border border-stone-300 rounded-lg text-sm font-semibold bg-white min-w-[16rem]">
+          <option value="">Selecione a semana…</option>
           <template x-for="r in cardSemanas" :key="r.w"><option :value="r.w" x-text="r.label"></option></template>
         </select>
       </div>
-      <div class="overflow-auto">
-        <table class="w-full text-sm tbl-prog border-collapse">
-          <thead>
-            <tr class="bg-stone-100 text-stone-600 text-xs"><th class="p-1.5 text-left">Semana</th><th class="p-1.5 text-right">Denso t</th><th class="p-1.5 text-right">Denso veíc.</th><th class="p-1.5 text-right">Poroso t</th><th class="p-1.5 text-right">Poroso veíc.</th></tr>
-          </thead>
-          <tbody>
-            <template x-for="r in cardSemanasF" :key="r.w">
-              <tr :class="r.tot?'bg-stone-50 font-bold':''"><td class="p-1.5 text-stone-600 whitespace-nowrap" x-text="r.label"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dv"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pv"></td></tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+      <template x-if="semanaSel">
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="rounded-xl p-3 border-2 border-emerald-300 bg-emerald-50/60">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Denso</p>
+            <p class="text-2xl font-extrabold text-emerald-700 tabular-nums mt-0.5" x-text="semanaSel.dt+' t'"></p>
+            <div class="mt-1.5 pt-1.5 border-t border-emerald-200 flex items-center gap-1.5 text-emerald-800"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.dv+(semanaSel.dv==='1'?' veículo':' veículos')"></span></div>
+          </div>
+          <div class="rounded-xl p-3 border-2 border-orange-300 bg-orange-50/60">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-orange-700">Poroso</p>
+            <p class="text-2xl font-extrabold text-orange-700 tabular-nums mt-0.5" x-text="semanaSel.pt+' t'"></p>
+            <div class="mt-1.5 pt-1.5 border-t border-orange-200 flex items-center gap-1.5 text-orange-800"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.pv+(semanaSel.pv==='1'?' veículo':' veículos')"></span></div>
+          </div>
+          <div class="rounded-xl p-3 border-2 border-stone-300 bg-stone-50">
+            <p class="text-[11px] font-bold uppercase tracking-wide text-stone-600">Total da semana</p>
+            <p class="text-2xl font-extrabold text-stone-800 tabular-nums mt-0.5" x-text="semanaSel.tt+' t'"></p>
+            <div class="mt-1.5 pt-1.5 border-t border-stone-200 flex items-center gap-1.5 text-stone-700"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.tv+(semanaSel.tv===1?' veículo':' veículos')"></span></div>
+          </div>
+        </div>
+      </template>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
-        <h3 class="font-semibold text-sm mb-3">Evolução do Saldo (NET) — projeção completa</h3>
+        <h3 class="font-semibold text-sm">Estoque projetado x Estoque físico</h3>
+        <p class="text-[11px] text-stone-500 mb-2">Físico = consumo e entrega executados lançados. Projetado = só o planejado (recomeça do estoque digitado).</p>
         <div id="chNet" class="w-full h-[320px] echart-container"></div>
       </div>
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
@@ -249,17 +249,23 @@
       <button @click="addSemana()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-plus"/></svg>Adicionar dias</button>
     </div>
 
-    <!-- PROGRAMADO A RECEBER: 1 card por produto (peso em cima, veículos embaixo, datas de entrega) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <template x-for="c in cardReceber" :key="c.nome">
-        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="c.nome==='Denso'?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c.nome.toUpperCase()"></p>
-          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'">Programado a receber</p>
-          <p class="text-xl font-extrabold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.peso+' t'"></p>
-          <p class="text-base font-bold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.veic+(c.veic==='1'?' veículo':' veículos')"></p>
-          <p x-show="c.datas" class="text-[11px] text-stone-500 font-medium mt-0.5" x-text="c.datas"></p>
-        </div>
-      </template>
+    <!-- EM TRÂNSITO: Entrega Executada de amanhã em diante (Denso + Poroso no mesmo card) -->
+    <div class="bg-white rounded-xl border-2 border-sky-200 shadow-sm p-3">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="p-1.5 rounded-lg bg-sky-100 text-sky-600"><svg class="ic"><use href="#i-truck"/></svg></span>
+        <p class="text-sm font-bold text-stone-800">EM TRÂNSITO</p>
+        <p class="text-[11px] text-stone-500">Entrega executada das datas de entrega de amanhã em diante; só conta depois de preenchida</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <template x-for="c in cardTransito" :key="c.nome">
+          <div class="rounded-lg p-2.5 border-2" :class="c.nome==='Denso'?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
+            <p class="text-[11px] font-bold uppercase tracking-wide" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.nome"></p>
+            <p class="text-xl font-extrabold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.peso+' t'"></p>
+            <p class="text-base font-bold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.veic+(c.veic==='1'?' veículo':' veículos')"></p>
+            <p class="text-[11px] text-stone-500 font-medium mt-0.5" x-text="c.datas||'nada preenchido'"></p>
+          </div>
+        </template>
+      </div>
     </div>
 
     <!-- PAINEL DE AUTONOMIA: segunda-feira da próxima semana -->
@@ -441,7 +447,7 @@ function sys(){
   const pad=n=>String(n).padStart(2,'0');
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   return {
-    cloud:false, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, filtroSemana:'', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -687,9 +693,15 @@ function sys(){
     get alertas(){if(!this.dias.length)return[];const l=this.limAlerta;return [['Denso',this.media7(this.rD)],['Poroso',this.media7(this.rP)],['Total (Denso + Poroso)',this.mediaTot()]].filter(x=>x[1]!=null&&x[1]>l).map(x=>x[0]+': média dos últimos 7 dias = '+this.fmt(x[1])+' t/dia (limite '+l+' t/dia)');},
     vei(v){const cap=+this.cfg.cap||47;return has(v)&&+v>0?Math.ceil(+v/cap-1e-9):0;},
     /* PROGRAMADO A RECEBER: soma da Entrega Planejada (Programação) de todas as colunas em que a Entrega Executada ainda não foi preenchida */
-    progReceber(p){let t=0,v=0;const ds=[];for(let i=0;i<this.dias.length;i++){const a=this.dias[i][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(this.addDays(this.dias[i].iso,7));}}return {t:+t.toFixed(1),v,ds};},
+    progReceber(p){
+      /* última DATA DE ENTREGA (coluna + 7 dias) com Entrega Executada preenchida; ex.: entrega 19/10 executada -> conta a partir de 20/10 */
+      let ult='';this.dias.forEach(d=>{if(has(d[p][3])){const e=this.addDays(d.iso,7);if(e>ult)ult=e;}});
+      let t=0,v=0;const ds=[];
+      this.dias.forEach(d=>{const a=d[p],e=this.addDays(d.iso,7);if((!ult||e>ult)&&has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(e);}});
+      return {t:+t.toFixed(1),v,ds,ini:ult?this.addDays(ult,1):''};
+    },
     /* EM TRÂNSITO: Entrega Executada preenchida das colunas com data de entrega a partir de amanhã até a última data preenchida (planilha): soma da Entrega Executada das colunas com data de entrega > hoje; veículos = ROUND(peso ÷ capacidade) */
-    emTransito(p){let t=0;const ds=[];this.dias.forEach(d=>{const x=d[p][3];if(has(x)&&this.addDays(d.iso,7)>this.todayISO){t+=+x;ds.push(this.addDays(d.iso,7));}});const cap=+this.cfg.cap||47;return {t:+t.toFixed(1),v:Math.round(t/cap),ds};},
+    emTransito(p){let t=0;const ds=[];this.dias.forEach(d=>{const x=d[p][3],e=this.addDays(d.iso,7);if(has(x)&&e>this.todayISO){t+=+x;if(+x>0)ds.push(e);}});const cap=+this.cfg.cap||47;return {t:+t.toFixed(1),v:Math.round(t/cap),ds};},
     kpis(){
       const mD=this.media7(this.rD), mP=this.media7(this.rP);
       const l=this.limAlerta,cr=(v,b)=>v!=null&&v>l?'text-red-600':b;
@@ -699,7 +711,7 @@ function sys(){
       const k=[];
       cfg.forEach(([p,nome,m,R,cor,ib,ic])=>{
         const pr=this.progReceber(p), tr=this.emTransito(p);
-        k.push({titulo:'PROGRAMADO A RECEBER — '+nome,valor:this.fmt(pr.t)+' t',sub:dtxt(pr.ds),icone:'calendar-days',cor:'text-violet-600',ib:'bg-violet-100',ic:'text-violet-600'});
+        k.push({titulo:'PROGRAMADO A RECEBER — '+nome,valor:this.fmt(pr.t)+' t',sub:dtxt(pr.ds,pr.ini),icone:'calendar-days',cor:'text-violet-600',ib:'bg-violet-100',ic:'text-violet-600'});
         k.push({titulo:'EM TRÂNSITO — '+nome,valor:this.fmt(tr.t)+' t',sub:dtxt(tr.ds,this.addDays(this.todayISO,1)),icone:'truck',cor:'text-sky-600',ib:'bg-sky-100',ic:'text-sky-600'});
       });
       return k;
@@ -757,13 +769,20 @@ function sys(){
     renderCharts(){
       const labels=this.dias.map(d=>d.d);
       const mk=(id,opt)=>{const el=document.getElementById(id);if(!el)return;const c=echarts.getInstanceByDom(el)||echarts.init(el);c.setOption(opt,true);this.charts[id]=c;};
-      mk('chNet',{tooltip:{trigger:'axis'},legend:{data:['Denso','Poroso','Total'],top:0},
-        grid:{left:55,right:20,top:35,bottom:30},xAxis:{type:'category',data:labels},
+      const est=p=>{const A=p==='D'?this.rD:this.rP,ei0=+(p==='D'?this.cfg.eiD:this.cfg.eiP)||0;let prev=null;const proj=[],fis=[];
+        this.dias.forEach((d,i)=>{const a=d[p]||[],man=has(a[4]),cp=has(a[0])?+a[0]:0,ep=has(a[2])?+a[2]:0;
+          const ei=man?+a[4]:(prev!=null?prev:ei0),n=ei-cp+ep;prev=n;proj.push(+n.toFixed(2));
+          fis.push(this.rowFin(i,p)?+A[i].net.toFixed(2):null);});
+        return {proj,fis};};
+      const eD=est('D'),eP=est('P');
+      mk('chNet',{tooltip:{trigger:'axis'},legend:{data:['Denso físico','Denso projetado','Poroso físico','Poroso projetado'],top:0},
+        grid:{left:55,right:20,top:40,bottom:30},xAxis:{type:'category',data:labels},
         yAxis:{type:'value',name:'t',splitLine:{lineStyle:{color:'#f5f2ec'}}},
         series:[
-          {name:'Denso',type:'line',smooth:true,data:this.rD.map(r=>+r.net.toFixed(2)),lineStyle:{width:3,color:'#059669'},itemStyle:{color:'#059669'},areaStyle:{color:'rgba(5,150,105,.08)'},markLine:{silent:true,symbol:'none',lineStyle:{color:'#ef4444',type:'dashed'},data:[{yAxis:0,label:{formatter:'0'}}]}},
-          {name:'Poroso',type:'line',smooth:true,data:this.rP.map(r=>+r.net.toFixed(2)),lineStyle:{width:3,color:'#ea580c'},itemStyle:{color:'#ea580c'},areaStyle:{color:'rgba(234,88,12,.08)'}},
-          {name:'Total',type:'line',smooth:true,data:this.netTotal.map(v=>+v.toFixed(2)),lineStyle:{width:2,type:'dashed',color:'#a8a29e'},itemStyle:{color:'#a8a29e'}}
+          {name:'Denso físico',type:'line',data:eD.fis,lineStyle:{width:3,color:'#059669'},itemStyle:{color:'#059669'},symbolSize:6,markLine:{silent:true,symbol:'none',lineStyle:{color:'#ef4444',type:'dashed'},data:[{yAxis:0,label:{formatter:'0'}}]}},
+          {name:'Denso projetado',type:'line',data:eD.proj,symbol:'none',lineStyle:{width:2,type:'dashed',color:'#34d399'},itemStyle:{color:'#34d399'}},
+          {name:'Poroso físico',type:'line',data:eP.fis,lineStyle:{width:3,color:'#ea580c'},itemStyle:{color:'#ea580c'},symbolSize:6},
+          {name:'Poroso projetado',type:'line',data:eP.proj,symbol:'none',lineStyle:{width:2,type:'dashed',color:'#fb923c'},itemStyle:{color:'#fb923c'}}
         ]});
       const h=this.dias.length, cut=r=>r.slice(Math.max(0,h-30));
       mk('chCons',{tooltip:{trigger:'axis'},legend:{top:0},
@@ -807,23 +826,18 @@ function sys(){
     },
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
-    get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[],fd=x=>this.fmtDateBR(x).slice(0,5);
-      [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{
-        /* data de entrega mais recente com Entrega Executada preenchida (coluna + 7 dias) */
-        let ultEnt='';this.dias.forEach(d=>{if(has(d[p][3])){const e=this.addDays(d.iso,7);if(e>ultEnt)ultEnt=e;}});
-        let t=0,v=0;const ds=[];
-        /* conta somente colunas cuja entrega cai DEPOIS da última entrega executada preenchida */
-        this.dias.forEach(d=>{const a=d[p],e=this.addDays(d.iso,7);if(e>ultEnt&&has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(e);}});
-        ds.sort();const datas=!ds.length?'':ds[0]===ds[ds.length-1]?'entrega '+fd(ds[0]):'entrega de '+fd(ds[0])+' a '+fd(ds[ds.length-1]);
-        out.push({nome,peso:f(t),veic:String(v),datas});});return out;},
+    get cardTransito(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),fd=x=>this.fmtDateBR(x).slice(0,5);
+      return [['D','Denso'],['P','Poroso']].map(([p,nome])=>{
+        /* Entrega Executada cuja DATA DE ENTREGA (coluna + 7) é de amanhã em diante; só conta o que já foi preenchido */
+        const r=this.emTransito(p),ds=[...new Set(r.ds)].sort(),ini=ds[0],fim=ds[ds.length-1];
+        const datas=!ds.length?'':ini===fim?'entrega '+fd(fim):'entrega de '+fd(ini)+' a '+fd(fim);
+        return {nome,peso:f(r.t),veic:String(r.v),datas};});},
     get cardSemanas(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       return [...this.weeksList].map(w=>{const s={D:[0,0],P:[0,0]};
         for(let k=0;k<7;k++){const iso=this.addDays(w,k),d=this.dias.find(x=>x.iso===iso);if(!d)continue;['D','P'].forEach(p=>{const x=d[p][2];if(has(x)){s[p][0]+=+x;s[p][1]+=this.vei(x);}});}
         return {w,label:this.weekLabel(w),n:[s.D[0],s.D[1],s.P[0],s.P[1]],dt:f(s.D[0]),dv:String(s.D[1]),pt:f(s.P[0]),pv:String(s.P[1])};});},
-    get cardSemanasF(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),all=this.cardSemanas;
-      if(this.filtroSemana!=='todas')return all.filter(r=>r.w===this.filtroSemana);
-      const t=[0,0,0,0];all.forEach(r=>r.n.forEach((v,i)=>{t[i]+=v;}));
-      return all.concat([{w:'total',tot:true,label:'Total',dt:f(t[0]),dv:String(t[1]),pt:f(t[2]),pv:String(t[3])}]);},
+    get semanaSel(){const r=this.cardSemanas.find(x=>x.w===this.filtroSemana);if(!r)return null;const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      return {...r,tt:f(r.n[0]+r.n[2]),tv:r.n[1]+r.n[3]};},
     get demanda(){const s=this.selectedWeek;if(!s)return {dias:[],rows:[]};
       const dias=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((n,k)=>{const iso=this.addDays(s,k),d=this.dias.find(x=>x.iso===iso);
         const vD=d?this.vei(d.D[2]):0,vP=d?this.vei(d.P[2]):0;return {iso,n,vD,vP,tD:0,tP:0,fD:0,fP:0};});
