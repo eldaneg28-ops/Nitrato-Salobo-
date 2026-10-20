@@ -166,6 +166,27 @@
         </div>
       </template>
     </div>
+    <div class="bg-white rounded-lg border border-stone-200 shadow-sm p-3">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <p class="text-xs font-bold text-stone-700">Quantidade programada por semana</p>
+        <select x-model="filtroSemana" class="ml-auto px-2 py-1 border border-stone-300 rounded-lg text-xs font-semibold bg-white">
+          <option value="todas">Todas as semanas</option>
+          <template x-for="r in cardSemanas" :key="r.w"><option :value="r.w" x-text="r.label"></option></template>
+        </select>
+      </div>
+      <div class="overflow-auto">
+        <table class="w-full text-sm tbl-prog border-collapse">
+          <thead>
+            <tr class="bg-stone-100 text-stone-600 text-xs"><th class="p-1.5 text-left">Semana</th><th class="p-1.5 text-right">Denso t</th><th class="p-1.5 text-right">Denso veíc.</th><th class="p-1.5 text-right">Poroso t</th><th class="p-1.5 text-right">Poroso veíc.</th></tr>
+          </thead>
+          <tbody>
+            <template x-for="r in cardSemanasF" :key="r.w">
+              <tr :class="r.tot?'bg-stone-50 font-bold':''"><td class="p-1.5 text-stone-600 whitespace-nowrap" x-text="r.label"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dv"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pv"></td></tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
         <h3 class="font-semibold text-sm mb-3">Evolução do Saldo (NET) — projeção completa</h3>
@@ -209,6 +230,17 @@
         </div>
       </div>
       <button @click="addSemana()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-plus"/></svg>Adicionar dias</button>
+    </div>
+
+    <!-- PROGRAMADO A RECEBER -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <template x-for="c in cardReceber" :key="c[0]">
+        <div class="rounded-lg p-2 border-2 shadow-sm" :class="c[0].startsWith('Denso')?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'">Programado a receber</p>
+          <p class="text-xl font-extrabold" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'" x-text="c[1]+(c[0].includes('Peso')?' t':'')"></p>
+        </div>
+      </template>
     </div>
 
     <!-- PAINEL DE AUTONOMIA: segunda-feira da próxima semana -->
@@ -390,7 +422,7 @@ function sys(){
   const pad=n=>String(n).padStart(2,'0');
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   return {
-    cloud:false, novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -756,6 +788,18 @@ function sys(){
     },
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
+    get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[];
+      [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{let ult=-1;this.dias.forEach((d,i)=>{if(has(d[p][3]))ult=i;});let t=0,v=0;
+        for(let j=ult+1;j<this.dias.length;j++){const a=this.dias[j][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);}}
+        out.push([nome+' — Peso total',f(t)],[nome+' — Veículos',String(v)]);});return out;},
+    get cardSemanas(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      return [...this.weeksList].map(w=>{const s={D:[0,0],P:[0,0]};
+        for(let k=0;k<7;k++){const iso=this.addDays(w,k),d=this.dias.find(x=>x.iso===iso);if(!d)continue;['D','P'].forEach(p=>{const x=d[p][2];if(has(x)){s[p][0]+=+x;s[p][1]+=this.vei(x);}});}
+        return {w,label:this.weekLabel(w),n:[s.D[0],s.D[1],s.P[0],s.P[1]],dt:f(s.D[0]),dv:String(s.D[1]),pt:f(s.P[0]),pv:String(s.P[1])};});},
+    get cardSemanasF(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),all=this.cardSemanas;
+      if(this.filtroSemana!=='todas')return all.filter(r=>r.w===this.filtroSemana);
+      const t=[0,0,0,0];all.forEach(r=>r.n.forEach((v,i)=>{t[i]+=v;}));
+      return all.concat([{w:'total',tot:true,label:'Total',dt:f(t[0]),dv:String(t[1]),pt:f(t[2]),pv:String(t[3])}]);},
     get demanda(){const s=this.selectedWeek;if(!s)return {dias:[],rows:[]};
       const dias=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((n,k)=>{const iso=this.addDays(s,k),d=this.dias.find(x=>x.iso===iso);
         const vD=d?this.vei(d.D[2]):0,vP=d?this.vei(d.P[2]):0;return {iso,n,vD,vP,tD:0,tP:0,fD:0,fP:0};});
