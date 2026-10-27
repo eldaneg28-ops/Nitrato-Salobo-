@@ -113,25 +113,8 @@
         <button @click="nextWeek()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg transition"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
         <button @click="goToday()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">Semana atual</button>
       </div>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <!-- SALDO DO DIA: Denso + Poroso em um card -->
-        <div class="rounded-lg p-2 border border-stone-200 bg-stone-50">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight">SALDO DO DIA</p>
-          <div class="grid grid-cols-2 gap-2 mt-1">
-            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-lg font-extrabold text-emerald-700" x-text="fmt1(resumo.est.D.ei)+' t'"></p></div>
-            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-lg font-extrabold text-orange-700" x-text="fmt1(resumo.est.P.ei)+' t'"></p></div>
-          </div>
-        </div>
-        <!-- MÉDIA DE CONSUMO: Denso + Poroso em um card -->
-        <div class="rounded-lg p-2 border-2 border-stone-300 bg-stone-50/60 shadow-sm">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight">MÉDIA CONSUMO <span class="font-bold uppercase tracking-wide text-stone-600">· média 7 dias</span></p>
-          <div class="grid grid-cols-2 gap-2 mt-1">
-            <div><p class="text-[10px] font-semibold text-emerald-700 leading-tight">DENSO</p><p class="text-xl font-extrabold" :class="media7(rD)>limAlerta?'text-red-600':'text-emerald-700'" x-text="media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—'"></p></div>
-            <div class="border-l border-stone-200 pl-2"><p class="text-[10px] font-semibold text-orange-700 leading-tight">POROSO</p><p class="text-xl font-extrabold" :class="media7(rP)>limAlerta?'text-red-600':'text-orange-700'" x-text="media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—'"></p></div>
-          </div>
-        </div>
-        <!-- AUTONOMIA (inalterada) -->
-        <template x-for="c in [['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')]]" :key="c[0]">
+      <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
+        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(resumo.est.D.ei)+' t','','text-emerald-700'],['SALDO DO DIA — POROSO',fmt1(resumo.est.P.ei)+' t','','text-orange-700'],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
           <div class="rounded-lg p-2" :class="c[4]?(c[3].includes('emerald')?'border-2 border-emerald-300 bg-emerald-50/60 shadow-sm':'border-2 border-orange-300 bg-orange-50/60 shadow-sm'):'border border-stone-200 bg-stone-50'">
             <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
             <p x-show="c[4]" class="text-[11px] font-bold uppercase tracking-wide" :class="c[3]" x-text="c[5]"></p>
@@ -171,42 +154,42 @@
       <p class="text-[11px] text-stone-500 flex flex-wrap gap-x-4 gap-y-1"><span><span class="inline-block w-3 h-3 bg-rose-100 border border-rose-400 rounded-sm align-middle"></span> <b>Consumo planejado</b></span><span><span class="inline-block w-3 h-3 bg-violet-100 border border-violet-400 rounded-sm align-middle"></span> <b>Entrega planejada</b></span><span><span class="inline-block w-3 h-3 bg-sky-100 border border-sky-400 rounded-sm align-middle"></span> <b>Veículos</b></span><span><b>NET</b></span><span><b>Estoque inicial</b></span><span><b>Autonomia</b></span></p>
     </div>
 
-    <!-- QUANTIDADE PROGRAMADA POR SEMANA (só aparece quando uma semana é escolhida) -->
-    <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2">
-          <span class="p-1.5 rounded-lg bg-violet-100 text-violet-700"><svg class="ic"><use href="#i-calendar-days"/></svg></span>
-          <h3 class="text-sm font-bold text-stone-800">Quantidade programada por semana</h3>
-        </div>
-        <select x-model="filtroSemana" class="ml-auto px-3 py-2 border border-stone-300 rounded-lg text-sm font-semibold bg-white min-w-[16rem]">
-          <option value="">Selecione a semana…</option>
-          <template x-for="r in cardSemanas" :key="r.w"><option :value="r.w" x-text="r.label"></option></template>
-        </select>
-      </div>
-      <template x-if="semanaSel">
-        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="rounded-xl p-3 border-2 border-emerald-300 bg-emerald-50/60">
-            <p class="text-[11px] font-bold uppercase tracking-wide text-emerald-700">Denso</p>
-            <p class="text-2xl font-extrabold text-emerald-700 tabular-nums mt-0.5" x-text="semanaSel.dt+' t'"></p>
-            <div class="mt-1.5 pt-1.5 border-t border-emerald-200 flex items-center gap-1.5 text-emerald-800"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.dv+(semanaSel.dv==='1'?' veículo':' veículos')"></span></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <template x-for="k in kpis()" :key="k.titulo">
+        <div class="bg-white p-2.5 rounded-lg border border-stone-200 shadow-sm hover:shadow-md transition duration-300">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="text-[10px] font-medium text-stone-500 leading-tight" x-text="k.titulo"></span>
+            <span class="p-1 rounded-md" :class="k.ib"><svg class="ic" :class="k.ic"><use :href="'#i-'+k.icone"/></svg></span>
           </div>
-          <div class="rounded-xl p-3 border-2 border-orange-300 bg-orange-50/60">
-            <p class="text-[11px] font-bold uppercase tracking-wide text-orange-700">Poroso</p>
-            <p class="text-2xl font-extrabold text-orange-700 tabular-nums mt-0.5" x-text="semanaSel.pt+' t'"></p>
-            <div class="mt-1.5 pt-1.5 border-t border-orange-200 flex items-center gap-1.5 text-orange-800"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.pv+(semanaSel.pv==='1'?' veículo':' veículos')"></span></div>
-          </div>
-          <div class="rounded-xl p-3 border-2 border-stone-300 bg-stone-50">
-            <p class="text-[11px] font-bold uppercase tracking-wide text-stone-600">Total da semana</p>
-            <p class="text-2xl font-extrabold text-stone-800 tabular-nums mt-0.5" x-text="semanaSel.tt+' t'"></p>
-            <div class="mt-1.5 pt-1.5 border-t border-stone-200 flex items-center gap-1.5 text-stone-700"><svg class="ic"><use href="#i-truck"/></svg><span class="text-base font-bold tabular-nums" x-text="semanaSel.tv+(semanaSel.tv===1?' veículo':' veículos')"></span></div>
-          </div>
+          <p class="text-lg font-extrabold" :class="k.cor" x-text="k.valor"></p>
+          <p x-show="k.sub" class="text-[11px] text-stone-500 mt-0.5" x-text="k.sub"></p>
         </div>
       </template>
     </div>
+    <div class="bg-white rounded-lg border border-stone-200 shadow-sm p-3">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <p class="text-xs font-bold text-stone-700">Quantidade programada por semana</p>
+        <select x-model="filtroSemana" class="ml-auto px-2 py-1 border border-stone-300 rounded-lg text-xs font-semibold bg-white">
+          <option value="todas">Todas as semanas</option>
+          <template x-for="r in cardSemanas" :key="r.w"><option :value="r.w" x-text="r.label"></option></template>
+        </select>
+      </div>
+      <div class="overflow-auto">
+        <table class="w-full text-sm tbl-prog border-collapse">
+          <thead>
+            <tr class="bg-stone-100 text-stone-600 text-xs"><th class="p-1.5 text-left">Semana</th><th class="p-1.5 text-right">Denso t</th><th class="p-1.5 text-right">Denso veíc.</th><th class="p-1.5 text-right">Poroso t</th><th class="p-1.5 text-right">Poroso veíc.</th></tr>
+          </thead>
+          <tbody>
+            <template x-for="r in cardSemanasF" :key="r.w">
+              <tr :class="r.tot?'bg-stone-50 font-bold':''"><td class="p-1.5 text-stone-600 whitespace-nowrap" x-text="r.label"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dv"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pv"></td></tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
-        <h3 class="font-semibold text-sm">Estoque projetado x Estoque físico</h3>
-        <p class="text-[11px] text-stone-500 mb-2">Físico = consumo e entrega executados lançados. Projetado = só o planejado (recomeça do estoque digitado).</p>
+        <h3 class="font-semibold text-sm mb-3">Evolução do Saldo (NET) — projeção completa</h3>
         <div id="chNet" class="w-full h-[320px] echart-container"></div>
       </div>
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
@@ -249,23 +232,22 @@
       <button @click="addSemana()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-plus"/></svg>Adicionar dias</button>
     </div>
 
-    <!-- EM TRÂNSITO: Entrega Executada de amanhã em diante (Denso + Poroso no mesmo card) -->
-    <div class="bg-white rounded-xl border-2 border-sky-200 shadow-sm p-3">
-      <div class="flex flex-wrap items-center gap-2 mb-2">
-        <span class="p-1.5 rounded-lg bg-sky-100 text-sky-600"><svg class="ic"><use href="#i-truck"/></svg></span>
-        <p class="text-sm font-bold text-stone-800">EM TRÂNSITO</p>
-        <p class="text-[11px] text-stone-500">Entrega executada das datas de entrega de amanhã em diante; só conta depois de preenchida</p>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <template x-for="c in cardTransito" :key="c.nome">
-          <div class="rounded-lg p-2.5 border-2" :class="c.nome==='Denso'?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
-            <p class="text-[11px] font-bold uppercase tracking-wide" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.nome"></p>
-            <p class="text-xl font-extrabold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.peso+' t'"></p>
-            <p class="text-base font-bold" :class="c.nome==='Denso'?'text-emerald-700':'text-orange-700'" x-text="c.veic+(c.veic==='1'?' veículo':' veículos')"></p>
-            <p class="text-[11px] text-stone-500 font-medium mt-0.5" x-text="c.datas||'nada preenchido'"></p>
-          </div>
-        </template>
-      </div>
+    <!-- PROGRAMADO A RECEBER + MÉDIA DE CONSUMO -->
+    <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
+      <template x-for="c in cardReceber" :key="c[0]">
+        <div class="rounded-lg p-2 border-2 shadow-sm" :class="c[0].startsWith('Denso')?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'">Programado a receber</p>
+          <p class="text-xl font-extrabold" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'" x-text="c[1]+(c[0].includes('Peso')?' t':'')"></p>
+        </div>
+      </template>
+      <template x-for="m in cardMedia" :key="m.k">
+        <div class="rounded-lg p-2 border-2 shadow-sm" :class="m.alerta?'border-red-400 bg-red-50':m.bg">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="'MÉDIA CONSUMO — '+m.nome"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide" :class="m.alerta?'text-red-600':m.cor" x-text="m.alerta?'ALERTA acima de '+limAlerta+' t':'média 7 dias'"></p>
+          <p class="text-xl font-extrabold" :class="m.alerta?'text-red-600':m.cor" x-text="m.v"></p>
+        </div>
+      </template>
     </div>
 
     <!-- PAINEL DE AUTONOMIA: segunda-feira da próxima semana -->
@@ -388,7 +370,7 @@
   <section x-show="tab==='config'" class="max-w-xl space-y-4">
     <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-sm space-y-4">
       <h3 class="font-semibold text-sm">Parâmetros do sistema</h3>
-      <template x-for="f in [['eiD','Estoque inicial — Denso (t)'],['eiP','Estoque inicial — Poroso (t)'],['limD','Limite de estoque — Denso (t)'],['limP','Limite de estoque — Poroso (t)'],['cap','Capacidade por veículo (t)'],['alerta','Alerta de consumo médio (t/dia)']]" :key="f[0]">
+      <template x-for="f in [['eiD','Estoque inicial — Denso (t)'],['eiP','Estoque inicial — Poroso (t)'],['limD','Limite de estoque — Denso (t)'],['limP','Limite de estoque — Poroso (t)'],['cap','Capacidade por veículo (t)'],['alertaMat','Alerta de consumo médio por material (t/dia)']]" :key="f[0]">
         <div class="flex items-center justify-between gap-4">
           <label class="text-sm text-stone-600" x-text="f[1]"></label>
           <input type="number" step="any" class="inp !w-32" x-model.number="cfg[f[0]]" @input="persistCfg()" @change="rndCfg(f[0])">
@@ -410,18 +392,25 @@
   const base='https://firestore.googleapis.com/v1/projects/'+PID+'/databases/(default)/documents/nitrato';
   const err=async r=>{let c='unavailable',m='';try{const j=await r.json();c=String((j.error&&j.error.status)||c).toLowerCase();m=(j.error&&j.error.message)||'';}catch(e){}throw Object.assign(new Error(m||('HTTP '+r.status)),{code:c});};
   let wseq=0;
-  const put=async(id,obj)=>{const r=await fetch(base+'/'+id+'?key='+KEY,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{j:{stringValue:JSON.stringify(obj)}}})});if(!r.ok)await err(r);wseq++;};
-  const del=async id=>{const r=await fetch(base+'/'+id+'?key='+KEY,{method:'DELETE'});if(!r.ok&&r.status!==404)await err(r);wseq++;};
-  const listAll=async()=>{const out=[];let tok='';do{const r=await fetch(base+'?pageSize=300&key='+KEY+(tok?'&pageToken='+encodeURIComponent(tok):''));if(!r.ok)await err(r);const j=await r.json();(j.documents||[]).forEach(d=>{const id=d.name.split('/').pop();try{out.push([id,JSON.parse(d.fields.j.stringValue)]);}catch(e){}});tok=j.nextPageToken||'';}while(tok);return out;};
+  const patch=async(id,obj)=>{const r=await fetch(base+'/'+id+'?key='+KEY,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{j:{stringValue:JSON.stringify(obj)}}})});if(!r.ok)await err(r);};
+  const sinal=()=>patch('meta',{v:Date.now()+'-'+Math.random().toString(36).slice(2,7)});
+  const put=async(id,obj)=>{await patch(id,obj);await sinal();wseq++;};
+  const del=async id=>{const r=await fetch(base+'/'+id+'?key='+KEY,{method:'DELETE'});if(!r.ok&&r.status!==404)await err(r);await sinal();wseq++;};
+  const lerMeta=async()=>{const r=await fetch(base+'/meta?key='+KEY);if(r.status===404)return null;if(!r.ok)await err(r);const j=await r.json();try{return JSON.parse(j.fields.j.stringValue).v;}catch(e){return null;}};
+  const listAll=async()=>{const out=[];let tok='';do{const r=await fetch(base+'?pageSize=300&key='+KEY+(tok?'&pageToken='+encodeURIComponent(tok):''));if(!r.ok)await err(r);const j=await r.json();(j.documents||[]).forEach(d=>{const id=d.name.split('/').pop();if(id==='meta')return;try{out.push([id,JSON.parse(d.fields.j.stringValue)]);}catch(e){}});tok=j.nextPageToken||'';}while(tok);return out;};
   const subs=[];let lastAll=null,lastSig='',timer=null,seeded=false,busy=false;
   const seed=async()=>{await put('cfg',SEED_DB.cfg);for(const k in SEED_DB.days)await put(k,SEED_DB.days[k]);};
-  const tick=async()=>{if(busy)return;busy=true;
-    try{const s0=wseq;let all=await listAll();if(s0!==wseq)return;
+  let lastV=undefined;
+  const tick=async()=>{if(busy)return;if(typeof document!=='undefined'&&document.hidden&&lastAll)return;busy=true;
+    try{const s0=wseq;const v=await lerMeta();
+      if(lastAll&&v!==null&&v===lastV)return;
+      let all=await listAll();if(s0!==wseq)return;
       if(!all.length&&!seeded){seeded=true;await seed();all=await listAll();}
-      const sig=JSON.stringify(all);if(sig!==lastSig){lastSig=sig;lastAll=all;subs.forEach(s=>s.cb(all));}}
-    catch(e){lastSig='';subs.forEach(s=>s.er&&s.er(e));}
+      lastV=await lerMeta();if(lastV===null&&all.length){await sinal();lastV=await lerMeta();}
+      const sig=JSON.stringify(all);if(sig!==lastSig||!lastAll){lastSig=sig;lastAll=all;subs.forEach(s=>s.cb(all));}}
+    catch(e){lastSig='';lastV=undefined;subs.forEach(s=>s.er&&s.er(e));}
     finally{busy=false;}};
-  const sub=(cb,er)=>{const s={cb,er};subs.push(s);if(lastAll)cb(lastAll);if(!timer){timer=setInterval(tick,4000);}tick();return()=>{const i=subs.indexOf(s);if(i>=0)subs.splice(i,1);};};
+  const sub=(cb,er)=>{const s={cb,er};subs.push(s);if(lastAll)cb(lastAll);if(!timer){timer=setInterval(tick,15000);if(typeof document!=='undefined')document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});}tick();return()=>{const i=subs.indexOf(s);if(i>=0)subs.splice(i,1);};};
   const fbDb={
     collection(n){return{
       onSnapshot(cb,er){return sub(all=>cb({docs:all.filter(x=>x[0]!=='cfg').map(x=>({id:x[0],data:()=>x[1]}))}),er);},
@@ -446,9 +435,10 @@ function sys(){
   const has=v=>v!==null&&v!==undefined&&v!==''&&!isNaN(v);
   const pad=n=>String(n).padStart(2,'0');
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+  const memo={ver:-1,fk:'',D:null,P:null,F:null,Df:null,Pf:null,pr:null};
   return {
-    cloud:false, filtroSemana:'', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
-    cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140},
+    cloud:false, _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
     get readOnly(){return this.roPlat||this.roAcl;},
@@ -552,7 +542,7 @@ function sys(){
       const left=this.dias.filter(d=>keep.has(this.key(d.iso))||this.pend[this.key(d.iso)]);
       if(left.length!==this.dias.length){this.dias=left;ch=true;}
       if(ch)this.dias.sort((a,b)=>a.iso<b.iso?-1:1);
-      this.syncWeekSel();
+      this._ver++;this.syncWeekSel();
       if(!Object.keys(this.pend).length&&!this.cfgDirty)this.syncTxt='Sincronizado';
       if(this.tab==='painel')this.$nextTick(()=>this.renderCharts());
     },
@@ -594,10 +584,10 @@ function sys(){
         for(let j=i+1;j<this.dias.length;j++){const t=this.dias[j],c=t[p][sl];if(has(t[p][ex]))continue;
           if((!has(c)||(prev!=null&&+c===+prev))&&(!has(c)||+c!==+v)){t[p][sl]=v;this.pend[this.key(t.iso)]=++this._seq;}}
         this._auto[k]=v;}));},
-    persist(i){if(this.guardRO())return;const d=this.dias[i];if(!d)return;this.autoPlan(i);this.pend[this.key(d.iso)]=++this._seq;this.flushSoon();},
+    persist(i){if(this.guardRO())return;const d=this.dias[i];if(!d)return;this._ver++;this.pend[this.key(d.iso)]=++this._seq;this.flushSoon();},
     rnd(i,p,k){const a=this.dias[i]&&this.dias[i][p];if(!a)return;const v=a[k];if(has(v)&&+v!==Math.round(+v)){a[k]=Math.round(+v);this.persist(i);}},
     rndCfg(k){const v=this.cfg[k];if(has(v)&&+v!==Math.round(+v)){this.cfg[k]=Math.round(+v);this.persistCfg();}},
-    persistCfg(){if(this.guardRO())return;this.cfgDirty=++this._cseq;this.flushSoon();},
+    persistCfg(){if(this.guardRO())return;this._ver++;this.cfgDirty=++this._cseq;this.flushSoon();},
     flushSoon(){this.syncTxt='Salvando…';clearTimeout(this._t);this._t=setTimeout(()=>this.flush(),500);},
     async flush(){
       if(this._saving||!this.ref)return;this._saving=true;
@@ -655,12 +645,13 @@ function sys(){
       });
       return R;
     },
-    get rD(){return this.calc('D')},
-    get rP(){return this.calc('P')},
+    _memoCalc(){const v=this._ver;if(memo.ver!==v||!memo.D){memo.D=this.calc('D');memo.P=this.calc('P');memo.ver=v;}},
+    get rD(){this._memoCalc();return memo.D;},
+    get rP(){this._memoCalc();return memo.P;},
     get netTotal(){return this.rD.map((r,i)=>r.net+this.rP[i].net);},
     get idxEntHoje(){const i=this.dias.findIndex(d=>d.iso===this.addDays(this.todayISO,-7));return i>=0?i:this.idxHoje;},
     get idxHoje(){const i=this.dias.findIndex(d=>d.iso===this.todayISO);return i>=0?i:this.dias.length-1;},
-    get diasF(){return this.weekIdxs(this.selectedWeek).sort((a,b)=>this.dias[a].iso<this.dias[b].iso?-1:1);},
+    get diasF(){const k=this._ver+'|'+this.selectedWeek;if(memo.fk!==k||!memo.F){memo.F=this.weekIdxs(this.selectedWeek).sort((a,b)=>this.dias[a].iso<this.dias[b].iso?-1:1);memo.fk=k;memo.Df=null;memo.Pf=null;}return memo.F;},
     get lancRows(){return [...this.diasF].sort((a,b)=>this.dias[a].iso<this.dias[b].iso?-1:1).flatMap(i=>['D','P'].map(p=>({i,p,k:'L'+i+p})));},
     get diasL(){return [...this.diasF].reverse();},
     /* saldo (NET, % limite, autonomia) da coluna = saldo da data de entrega (coleta + 7 dias) */
@@ -668,8 +659,8 @@ function sys(){
     autMedia(p){const R=p==='D'?this.rD:this.rP;return this.diasF.map(i=>{const r=R[i];if(!r)return null;const v=[];for(let k=Math.max(0,i-6);k<=i;k++){const x=R[k];const c=x.ce!=null?x.ce:(x.cp>0?x.cp:null);if(c!=null)v.push(c);}if(!v.length)return null;const m=v.reduce((a,b)=>a+b,0)/v.length;return m>0?r.net/m:null;});},
     entRows(rws){const nul={net:null,pct:null,aut:null};return this.diasF.map(i=>{const t=this.ti(i,{shift:7});return t>=0?rws[t]:nul;});},
     /* planilha: todas as linhas da coluna (Estoque, NET, % estoque, autonomia) usam os valores da própria coluna */
-    get rDf(){return this.diasF.map(i=>this.rD[i]);},
-    get rPf(){return this.diasF.map(i=>this.rP[i]);},
+    get rDf(){const F=this.diasF,R=this.rD;if(!memo.Df)memo.Df=F.map(i=>R[i]);return memo.Df;},
+    get rPf(){const F=this.diasF,R=this.rP;if(!memo.Pf)memo.Pf=F.map(i=>R[i]);return memo.Pf;},
     get netF(){return this.rDf.map((r,j)=>r.net==null||this.rPf[j].net==null?null:r.net+this.rPf[j].net);},
     colEnt(iso){return this.addDays(iso,7)===this.todayISO?'col-ent':'';},
     /* coluna cuja ENTREGA cai hoje (coleta = hoje - 7): o NET dela é o saldo/estoque de hoje */
@@ -689,19 +680,13 @@ function sys(){
     media7(rws){const v=rws.map(r=>r.ce).filter(x=>x!==null).slice(-7);return v.length?+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):null;},
     mediaTot(){const k=this.ancoraCE(true);if(k<0)return null;const v=[];for(let i=Math.max(0,k-6);i<=k;i++){const a=this.rD[i]&&this.rD[i].ce,b=this.rP[i]&&this.rP[i].ce;if(a!=null&&b!=null)v.push(a+b);}return v.length?+(v.reduce((x,y)=>x+y,0)/v.length).toFixed(2):null;},
     dtAncora(tot,rws){const k=tot?this.ancoraCE(true):this.ancoraP(rws);return k>=0?' · até '+this.dias[k].d:'';},
-    get limAlerta(){return +this.cfg.alerta||140;},
-    get alertas(){if(!this.dias.length)return[];const l=this.limAlerta;return [['Denso',this.media7(this.rD)],['Poroso',this.media7(this.rP)],['Total (Denso + Poroso)',this.mediaTot()]].filter(x=>x[1]!=null&&x[1]>l).map(x=>x[0]+': média dos últimos 7 dias = '+this.fmt(x[1])+' t/dia (limite '+l+' t/dia)');},
+    get limAlerta(){return +this.cfg.alertaMat||120;},
+    get alertas(){if(!this.dias.length)return[];const l=this.limAlerta;return [['Denso',this.media7(this.rD)],['Poroso',this.media7(this.rP)]].filter(x=>x[1]!=null&&x[1]>l).map(x=>x[0]+': média dos últimos 7 dias = '+this.fmt(x[1])+' t/dia (limite '+l+' t/dia)');},
     vei(v){const cap=+this.cfg.cap||47;return has(v)&&+v>0?Math.ceil(+v/cap-1e-9):0;},
     /* PROGRAMADO A RECEBER: soma da Entrega Planejada (Programação) de todas as colunas em que a Entrega Executada ainda não foi preenchida */
-    progReceber(p){
-      /* última DATA DE ENTREGA (coluna + 7 dias) com Entrega Executada preenchida; ex.: entrega 19/10 executada -> conta a partir de 20/10 */
-      let ult='';this.dias.forEach(d=>{if(has(d[p][3])){const e=this.addDays(d.iso,7);if(e>ult)ult=e;}});
-      let t=0,v=0;const ds=[];
-      this.dias.forEach(d=>{const a=d[p],e=this.addDays(d.iso,7);if((!ult||e>ult)&&has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(e);}});
-      return {t:+t.toFixed(1),v,ds,ini:ult?this.addDays(ult,1):''};
-    },
+    progReceber(p){let t=0,v=0;const ds=[];for(let i=0;i<this.dias.length;i++){const a=this.dias[i][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);if(+a[2]>0)ds.push(this.addDays(this.dias[i].iso,7));}}return {t:+t.toFixed(1),v,ds};},
     /* EM TRÂNSITO: Entrega Executada preenchida das colunas com data de entrega a partir de amanhã até a última data preenchida (planilha): soma da Entrega Executada das colunas com data de entrega > hoje; veículos = ROUND(peso ÷ capacidade) */
-    emTransito(p){let t=0;const ds=[];this.dias.forEach(d=>{const x=d[p][3],e=this.addDays(d.iso,7);if(has(x)&&e>this.todayISO){t+=+x;if(+x>0)ds.push(e);}});const cap=+this.cfg.cap||47;return {t:+t.toFixed(1),v:Math.round(t/cap),ds};},
+    emTransito(p){let t=0;const ds=[];this.dias.forEach(d=>{const x=d[p][3];if(has(x)&&this.addDays(d.iso,7)>this.todayISO){t+=+x;ds.push(this.addDays(d.iso,7));}});const cap=+this.cfg.cap||47;return {t:+t.toFixed(1),v:Math.round(t/cap),ds};},
     kpis(){
       const mD=this.media7(this.rD), mP=this.media7(this.rP);
       const l=this.limAlerta,cr=(v,b)=>v!=null&&v>l?'text-red-600':b;
@@ -711,7 +696,7 @@ function sys(){
       const k=[];
       cfg.forEach(([p,nome,m,R,cor,ib,ic])=>{
         const pr=this.progReceber(p), tr=this.emTransito(p);
-        k.push({titulo:'PROGRAMADO A RECEBER — '+nome,valor:this.fmt(pr.t)+' t',sub:dtxt(pr.ds,pr.ini),icone:'calendar-days',cor:'text-violet-600',ib:'bg-violet-100',ic:'text-violet-600'});
+        k.push({titulo:'PROGRAMADO A RECEBER — '+nome,valor:this.fmt(pr.t)+' t',sub:dtxt(pr.ds),icone:'calendar-days',cor:'text-violet-600',ib:'bg-violet-100',ic:'text-violet-600'});
         k.push({titulo:'EM TRÂNSITO — '+nome,valor:this.fmt(tr.t)+' t',sub:dtxt(tr.ds,this.addDays(this.todayISO,1)),icone:'truck',cor:'text-sky-600',ib:'bg-sky-100',ic:'text-sky-600'});
       });
       return k;
@@ -722,7 +707,8 @@ function sys(){
     progFin(i){return this.dias[i]?this.diaFase(i)==='FINALIZADA':false;},
     entFin(i){const t=this.dias.findIndex(d=>d.iso===this.addDays(this.dias[i].iso,7));return t>=0?this.diaFase(t):'';},
     /* linhas da Programação: definição estática; os valores são lidos direto dos getters (rD/rP) em cada célula, para atualizar na hora */
-    progRows(){
+    progRows(){return memo.pr||(memo.pr=this._progRowsBuild());},
+    _progRowsBuild(){
       const C={cp:{hex:'#fecdd3',txt:'text-rose-800',pl:'plan-r'},ep:{hex:'#ddd6fe',txt:'text-violet-800',pl:'plan-v'}};
       return [['D','DENSO'],['P','POROSO']].flatMap(([p,nome])=>[
         {label:nome+' — Estoque',unit:'t',slot:4},
@@ -769,20 +755,13 @@ function sys(){
     renderCharts(){
       const labels=this.dias.map(d=>d.d);
       const mk=(id,opt)=>{const el=document.getElementById(id);if(!el)return;const c=echarts.getInstanceByDom(el)||echarts.init(el);c.setOption(opt,true);this.charts[id]=c;};
-      const est=p=>{const A=p==='D'?this.rD:this.rP,ei0=+(p==='D'?this.cfg.eiD:this.cfg.eiP)||0;let prev=null;const proj=[],fis=[];
-        this.dias.forEach((d,i)=>{const a=d[p]||[],man=has(a[4]),cp=has(a[0])?+a[0]:0,ep=has(a[2])?+a[2]:0;
-          const ei=man?+a[4]:(prev!=null?prev:ei0),n=ei-cp+ep;prev=n;proj.push(+n.toFixed(2));
-          fis.push(this.rowFin(i,p)?+A[i].net.toFixed(2):null);});
-        return {proj,fis};};
-      const eD=est('D'),eP=est('P');
-      mk('chNet',{tooltip:{trigger:'axis'},legend:{data:['Denso físico','Denso projetado','Poroso físico','Poroso projetado'],top:0},
-        grid:{left:55,right:20,top:40,bottom:30},xAxis:{type:'category',data:labels},
+      mk('chNet',{tooltip:{trigger:'axis'},legend:{data:['Denso','Poroso','Total'],top:0},
+        grid:{left:55,right:20,top:35,bottom:30},xAxis:{type:'category',data:labels},
         yAxis:{type:'value',name:'t',splitLine:{lineStyle:{color:'#f5f2ec'}}},
         series:[
-          {name:'Denso físico',type:'line',data:eD.fis,lineStyle:{width:3,color:'#059669'},itemStyle:{color:'#059669'},symbolSize:6,markLine:{silent:true,symbol:'none',lineStyle:{color:'#ef4444',type:'dashed'},data:[{yAxis:0,label:{formatter:'0'}}]}},
-          {name:'Denso projetado',type:'line',data:eD.proj,symbol:'none',lineStyle:{width:2,type:'dashed',color:'#34d399'},itemStyle:{color:'#34d399'}},
-          {name:'Poroso físico',type:'line',data:eP.fis,lineStyle:{width:3,color:'#ea580c'},itemStyle:{color:'#ea580c'},symbolSize:6},
-          {name:'Poroso projetado',type:'line',data:eP.proj,symbol:'none',lineStyle:{width:2,type:'dashed',color:'#fb923c'},itemStyle:{color:'#fb923c'}}
+          {name:'Denso',type:'line',smooth:true,data:this.rD.map(r=>+r.net.toFixed(2)),lineStyle:{width:3,color:'#059669'},itemStyle:{color:'#059669'},areaStyle:{color:'rgba(5,150,105,.08)'},markLine:{silent:true,symbol:'none',lineStyle:{color:'#ef4444',type:'dashed'},data:[{yAxis:0,label:{formatter:'0'}}]}},
+          {name:'Poroso',type:'line',smooth:true,data:this.rP.map(r=>+r.net.toFixed(2)),lineStyle:{width:3,color:'#ea580c'},itemStyle:{color:'#ea580c'},areaStyle:{color:'rgba(234,88,12,.08)'}},
+          {name:'Total',type:'line',smooth:true,data:this.netTotal.map(v=>+v.toFixed(2)),lineStyle:{width:2,type:'dashed',color:'#a8a29e'},itemStyle:{color:'#a8a29e'}}
         ]});
       const h=this.dias.length, cut=r=>r.slice(Math.max(0,h-30));
       mk('chCons',{tooltip:{trigger:'axis'},legend:{top:0},
@@ -820,24 +799,25 @@ function sys(){
       }
       this.dias.sort((a,b)=>a.iso<b.iso?-1:1);
       this.dias.forEach(d=>d.wk=this.mondayOf(d.iso));
-      this.selectedWeek=this.mondayOf(this.novoDe);this.syncWeekSel();
+      this._ver++;this.selectedWeek=this.mondayOf(this.novoDe);this.syncWeekSel();
       this.dias.forEach(d=>{if(!this.pend[this.key(d.iso)]&&d.iso>=this.novoDe&&d.iso<=this.novoAte)this.pend[this.key(d.iso)]=++this._seq;});this.flushSoon();
       this.msg(n+' dia(s) adicionado(s) com consumo/entrega planejados automáticos.');
     },
-    delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this.pend[k]=++this._seq;this.flushSoon();}},
+    delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this._ver++;this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
-    get cardTransito(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),fd=x=>this.fmtDateBR(x).slice(0,5);
-      return [['D','Denso'],['P','Poroso']].map(([p,nome])=>{
-        /* Entrega Executada cuja DATA DE ENTREGA (coluna + 7) é de amanhã em diante; só conta o que já foi preenchido */
-        const r=this.emTransito(p),ds=[...new Set(r.ds)].sort(),ini=ds[0],fim=ds[ds.length-1];
-        const datas=!ds.length?'':ini===fim?'entrega '+fd(fim):'entrega de '+fd(ini)+' a '+fd(fim);
-        return {nome,peso:f(r.t),veic:String(r.v),datas};});},
+    get cardMedia(){return [['D','Denso',this.media7(this.rD),'text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso',this.media7(this.rP),'text-orange-700','border-orange-300 bg-orange-50/60']].map(([k,nome,m,cor,bg])=>({k,nome,cor,bg,alerta:m!=null&&m>this.limAlerta,v:m!=null?this.fmt1(m)+' t/dia':'—'}));},
+    get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[];
+      [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{let ult=-1;this.dias.forEach((d,i)=>{if(has(d[p][3]))ult=i;});let t=0,v=0;
+        for(let j=ult+1;j<this.dias.length;j++){const a=this.dias[j][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);}}
+        out.push([nome+' — Peso total',f(t)],[nome+' — Veículos',String(v)]);});return out;},
     get cardSemanas(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       return [...this.weeksList].map(w=>{const s={D:[0,0],P:[0,0]};
         for(let k=0;k<7;k++){const iso=this.addDays(w,k),d=this.dias.find(x=>x.iso===iso);if(!d)continue;['D','P'].forEach(p=>{const x=d[p][2];if(has(x)){s[p][0]+=+x;s[p][1]+=this.vei(x);}});}
         return {w,label:this.weekLabel(w),n:[s.D[0],s.D[1],s.P[0],s.P[1]],dt:f(s.D[0]),dv:String(s.D[1]),pt:f(s.P[0]),pv:String(s.P[1])};});},
-    get semanaSel(){const r=this.cardSemanas.find(x=>x.w===this.filtroSemana);if(!r)return null;const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-      return {...r,tt:f(r.n[0]+r.n[2]),tv:r.n[1]+r.n[3]};},
+    get cardSemanasF(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),all=this.cardSemanas;
+      if(this.filtroSemana!=='todas')return all.filter(r=>r.w===this.filtroSemana);
+      const t=[0,0,0,0];all.forEach(r=>r.n.forEach((v,i)=>{t[i]+=v;}));
+      return all.concat([{w:'total',tot:true,label:'Total',dt:f(t[0]),dv:String(t[1]),pt:f(t[2]),pv:String(t[3])}]);},
     get demanda(){const s=this.selectedWeek;if(!s)return {dias:[],rows:[]};
       const dias=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((n,k)=>{const iso=this.addDays(s,k),d=this.dias.find(x=>x.iso===iso);
         const vD=d?this.vei(d.D[2]):0,vP=d?this.vei(d.P[2]):0;return {iso,n,vD,vP,tD:0,tP:0,fD:0,fP:0};});
