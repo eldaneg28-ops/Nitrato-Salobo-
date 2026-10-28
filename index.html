@@ -242,6 +242,7 @@
             <div><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Peso total</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.peso+' t'"></p></div>
             <div class="text-right"><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Veículos</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.veic"></p></div>
           </div>
+          <p class="text-xs font-bold mt-1.5 pt-1.5 border-t border-stone-200" :class="c.datas?c.cor:'text-stone-400 font-medium'" x-text="c.datas||'Sem entrega executada preenchida'"></p>
         </div>
       </template>
       <template x-for="m in cardMedia" :key="m.k">
@@ -809,7 +810,14 @@ function sys(){
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this._ver++;this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
     get cardMedia(){return [['D','Denso',this.media7(this.rD),'text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso',this.media7(this.rP),'text-orange-700','border-orange-300 bg-orange-50/60']].map(([k,nome,m,cor,bg])=>({k,nome,cor,bg,alerta:m!=null&&m>this.limAlerta,v:m!=null?this.fmt1(m)+' t/dia':'—'}));},
-    get cardReceber2(){const c=this.cardReceber;return [{k:'D',nome:'Denso',peso:c[0][1],veic:c[1][1],cor:'text-emerald-700',bg:'border-emerald-300 bg-emerald-50/60'},{k:'P',nome:'Poroso',peso:c[2][1],veic:c[3][1],cor:'text-orange-700',bg:'border-orange-300 bg-orange-50/60'}];},
+    /* PROGRAMADO A RECEBER: soma da ENTREGA EXECUTADA preenchida, das datas de entrega de amanhã até a última data com Entrega Executada preenchida (ex.: 29/10 a 02/11). Célula vazia não conta. */
+    get cardReceber2(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),dm=x=>this.dmShort(x)+' '+this.dowShort(x),amanha=this.addDays(this.todayISO,1);
+      return [['D','Denso','text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso','text-orange-700','border-orange-300 bg-orange-50/60']].map(([p,nome,cor,bg])=>{
+        let fim='';this.dias.forEach(d=>{if(has(d[p][3])){const e=this.addDays(d.iso,7);if(e>fim)fim=e;}});
+        let t=0,v=0;
+        if(fim>=amanha)this.dias.forEach(d=>{const e=this.addDays(d.iso,7),x=d[p][3];if(e>=amanha&&e<=fim&&has(x)){t+=+x;v+=this.vei(x);}});
+        const datas=fim>=amanha?(amanha===fim?'ENTREGA '+dm(fim):'ENTREGA de '+dm(amanha)+' a '+dm(fim)):'';
+        return {k:p,nome,cor,bg,peso:f(t),veic:String(v),datas};});},
     get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[];
       [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{let ult=-1;this.dias.forEach((d,i)=>{if(has(d[p][3]))ult=i;});let t=0,v=0;
         for(let j=ult+1;j<this.dias.length;j++){const a=this.dias[j][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);}}
