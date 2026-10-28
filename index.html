@@ -114,11 +114,12 @@
         <button @click="goToday()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">Semana atual</button>
       </div>
       <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
-        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(resumo.est.D.ei)+' t','','text-emerald-700'],['SALDO DO DIA — POROSO',fmt1(resumo.est.P.ei)+' t','','text-orange-700'],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
+        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(resumo.est.D.ei)+' t','','text-emerald-700',true,'estoque hoje','',(cfg.limD>0?resumo.est.D.ei/cfg.limD:null)],['SALDO DO DIA — POROSO',fmt1(resumo.est.P.ei)+' t','','text-orange-700',true,'estoque hoje','',(cfg.limP>0?resumo.est.P.ei/cfg.limP:null)],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
           <div class="rounded-lg p-2" :class="c[4]?(c[3].includes('emerald')?'border-2 border-emerald-300 bg-emerald-50/60 shadow-sm':'border-2 border-orange-300 bg-orange-50/60 shadow-sm'):'border border-stone-200 bg-stone-50'">
             <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
             <p x-show="c[4]" class="text-[11px] font-bold uppercase tracking-wide" :class="c[3]" x-text="c[5]"></p>
             <p class="font-extrabold" :class="[c[6]||c[3],c[4]?'text-xl':'text-lg']" x-text="c[1]"></p>
+            <div x-show="c[7]!=null" class="h-2 rounded-full bg-white border border-stone-200 mt-1 overflow-hidden"><div class="h-full rounded-full" :class="c[7]>1?'bg-red-500':(c[3].includes('emerald')?'bg-emerald-500':'bg-orange-500')" :style="'width:'+Math.min(100,Math.max(0,(c[7]||0)*100))+'%'"></div></div>
             <p x-show="c[2]" :class="c[4]?'text-[11px] text-stone-500 font-medium':'text-[11px] text-stone-400'" x-text="c[2]"></p>
           </div>
         </template>
@@ -233,19 +234,21 @@
     </div>
 
     <!-- PROGRAMADO A RECEBER + MÉDIA DE CONSUMO -->
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
-      <template x-for="c in cardReceber" :key="c[0]">
-        <div class="rounded-lg p-2 border-2 shadow-sm" :class="c[0].startsWith('Denso')?'border-emerald-300 bg-emerald-50/60':'border-orange-300 bg-orange-50/60'">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
-          <p class="text-[11px] font-bold uppercase tracking-wide" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'">Programado a receber</p>
-          <p class="text-xl font-extrabold" :class="c[0].startsWith('Denso')?'text-emerald-700':'text-orange-700'" x-text="c[1]+(c[0].includes('Peso')?' t':'')"></p>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <template x-for="c in cardReceber2" :key="c.k">
+        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="c.bg">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="'PROGRAMADO A RECEBER — '+c.nome"></p>
+          <div class="flex items-end justify-between gap-2 mt-1">
+            <div><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Peso total</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.peso+' t'"></p></div>
+            <div class="text-right"><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Veículos</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.veic"></p></div>
+          </div>
         </div>
       </template>
       <template x-for="m in cardMedia" :key="m.k">
-        <div class="rounded-lg p-2 border-2 shadow-sm" :class="m.alerta?'border-red-400 bg-red-50':m.bg">
+        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="m.alerta?'border-red-400 bg-red-50':m.bg">
           <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="'MÉDIA CONSUMO — '+m.nome"></p>
-          <p class="text-[11px] font-bold uppercase tracking-wide" :class="m.alerta?'text-red-600':m.cor" x-text="m.alerta?'ALERTA acima de '+limAlerta+' t':'média 7 dias'"></p>
-          <p class="text-xl font-extrabold" :class="m.alerta?'text-red-600':m.cor" x-text="m.v"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide mt-1" :class="m.alerta?'text-red-600':m.cor" x-text="m.alerta?'ALERTA acima de '+limAlerta+' t':'média 7 dias'"></p>
+          <p class="text-xl font-extrabold leading-tight" :class="m.alerta?'text-red-600':m.cor" x-text="m.v"></p>
         </div>
       </template>
     </div>
@@ -806,6 +809,7 @@ function sys(){
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this._ver++;this.pend[k]=++this._seq;this.flushSoon();}},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
     get cardMedia(){return [['D','Denso',this.media7(this.rD),'text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso',this.media7(this.rP),'text-orange-700','border-orange-300 bg-orange-50/60']].map(([k,nome,m,cor,bg])=>({k,nome,cor,bg,alerta:m!=null&&m>this.limAlerta,v:m!=null?this.fmt1(m)+' t/dia':'—'}));},
+    get cardReceber2(){const c=this.cardReceber;return [{k:'D',nome:'Denso',peso:c[0][1],veic:c[1][1],cor:'text-emerald-700',bg:'border-emerald-300 bg-emerald-50/60'},{k:'P',nome:'Poroso',peso:c[2][1],veic:c[3][1],cor:'text-orange-700',bg:'border-orange-300 bg-orange-50/60'}];},
     get cardReceber(){const f=v=>(+v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),out=[];
       [['D','Denso'],['P','Poroso']].forEach(([p,nome])=>{let ult=-1;this.dias.forEach((d,i)=>{if(has(d[p][3]))ult=i;});let t=0,v=0;
         for(let j=ult+1;j<this.dias.length;j++){const a=this.dias[j][p];if(has(a[2])&&!has(a[3])){t+=+a[2];v+=this.vei(a[2]);}}
