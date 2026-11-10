@@ -65,6 +65,7 @@
 <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
 <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
 </defs></svg>
 <div class="max-w-[1400px] mx-auto p-4 space-y-4" x-cloak @keydown.enter="enterDown($event)">
 
@@ -78,10 +79,20 @@
       </div>
     </div>
     <div class="flex flex-wrap gap-2 text-xs font-semibold">
+      <label class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg flex items-center gap-1.5 transition cursor-pointer" :class="impBusy?'opacity-60 pointer-events-none':''" title="Escolha a planilha Programação_Nitrato (.xlsm/.xlsx) para preencher consumo, estoque e fila automaticamente"><svg class="ic"><use href="#i-upload"/></svg><span x-text="impBusy?'Lendo planilha…':'Carregar planilha'"></span><input type="file" accept=".xlsx,.xlsm,.xls" class="hidden" @change="importarPlanilha($event)"></label>
       <button @click="exportExcel()" class="px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>Baixar Excel</button>
       <button @click="exportCSV()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>CSV</button>
     </div>
   </header>
+
+  <!-- RESULTADO DA IMPORTAÇÃO DA PLANILHA -->
+  <div x-show="imp" class="rounded-xl border-2 px-3 py-2 text-sm" :class="imp&&imp.ok?'bg-emerald-50 border-emerald-300 text-emerald-900':'bg-amber-50 border-amber-300 text-amber-900'">
+    <div class="flex items-start gap-2">
+      <div class="flex-1 space-y-0.5"><p class="font-bold" x-text="imp?imp.titulo:''"></p><template x-for="(l,ix) in (imp?imp.linhas:[])" :key="ix"><p class="text-xs" x-text="l"></p></template>
+        <button x-show="imp&&imp.sem" @click="setTab('prog');selectedWeek=imp.sem;syncWeekSel()" class="mt-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">Ver na Programação (semana de hoje)</button></div>
+      <button @click="imp=null" class="px-2 font-bold text-lg leading-none" title="Fechar">×</button>
+    </div>
+  </div>
 
   <!-- TABS -->
   <nav class="flex gap-1 bg-white rounded-xl border border-stone-200 p-1 shadow-sm text-sm font-semibold">
@@ -114,7 +125,7 @@
         <button @click="goToday()" class="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition">Semana atual</button>
       </div>
       <div class="grid grid-cols-2 lg:grid-cols-6 gap-2">
-        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(resumo.est.D.ei)+' t','','text-emerald-700',true,'estoque hoje','',(cfg.limD>0?resumo.est.D.ei/cfg.limD:null)],['SALDO DO DIA — POROSO',fmt1(resumo.est.P.ei)+' t','','text-orange-700',true,'estoque hoje','',(cfg.limP>0?resumo.est.P.ei/cfg.limP:null)],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
+        <template x-for="c in [['SALDO DO DIA — DENSO',fmt1(saldoDia('D',resumo.est.D.ei).v)+' t',saldoDia('D',resumo.est.D.ei).txt,'text-emerald-700',true,'estoque hoje','',(cfg.limD>0?saldoDia('D',resumo.est.D.ei).v/cfg.limD:null)],['SALDO DO DIA — POROSO',fmt1(saldoDia('P',resumo.est.P.ei).v)+' t',saldoDia('P',resumo.est.P.ei).txt,'text-orange-700',true,'estoque hoje','',(cfg.limP>0?saldoDia('P',resumo.est.P.ei).v/cfg.limP:null)],['AUTONOMIA — DENSO',autSeg.d!=null?fmt1(autSeg.d)+' dias':'—','hoje: '+(resumo.autH.D!=null?fmt1(resumo.autH.D)+' dias':'—'),'text-emerald-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['AUTONOMIA — POROSO',autSeg.p!=null?fmt1(autSeg.p)+' dias':'—','hoje: '+(resumo.autH.P!=null?fmt1(resumo.autH.P)+' dias':'—'),'text-orange-700',true,(autSeg.seg?'segunda '+fmtDateBR(autSeg.seg).slice(0,5):'próxima segunda')],['MÉDIA CONSUMO — DENSO',media7(rD)!=null?fmt1(media7(rD))+' t/dia':'—','','text-emerald-700',true,'média 7 dias',media7(rD)>limAlerta?'text-red-600':'text-emerald-700'],['MÉDIA CONSUMO — POROSO',media7(rP)!=null?fmt1(media7(rP))+' t/dia':'—','','text-orange-700',true,'média 7 dias',media7(rP)>limAlerta?'text-red-600':'text-orange-700']]" :key="c[0]">
           <div class="rounded-lg p-2" :class="c[4]?(c[3].includes('emerald')?'border-2 border-emerald-300 bg-emerald-50/60 shadow-sm':'border-2 border-orange-300 bg-orange-50/60 shadow-sm'):'border border-stone-200 bg-stone-50'">
             <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="c[0]"></p>
             <p x-show="c[4]" class="text-[11px] font-bold uppercase tracking-wide" :class="c[3]" x-text="c[5]"></p>
@@ -437,11 +448,13 @@ const SEED_DB = {"cfg": {"alerta": 140, "cap": 47, "eiD": 546.12, "eiP": 236, "l
 
 function sys(){
   const has=v=>v!==null&&v!==undefined&&v!==''&&!isNaN(v);
+  /* arredondamento: parte decimal ACIMA de 0,500 sobe; 0,500 ou menos desce (ex.: 34,5 -> 34 | 34,51 -> 35) */
+  const arred=v=>{const x=+v,f=Math.floor(x),fr=Math.round((x-f)*1000)/1000;return fr>0.5?f+1:f;};
   const pad=n=>String(n).padStart(2,'0');
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   const memo={ver:-1,fk:'',D:null,P:null,F:null,Df:null,Pf:null,pr:null};
   return {
-    cloud:false, _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, imp:null, impBusy:false, _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -504,7 +517,7 @@ function sys(){
       this.initDb();
     },
     key(iso){return 'd'+iso.replace(/-/g,'');},
-    norm(a){const r=[];for(let k=0;k<6;k++){const v=(a||[])[k];r.push(has(v)?Math.round(+v):null);}return r;},
+    norm(a){const r=[];for(let k=0;k<6;k++){const v=(a||[])[k];r.push(has(v)?arred(v):null);}return r;},
     /* ---- NUVEM: banco compartilhado (db) do Artifact; sem ele, cai para o salvamento local do navegador ---- */
     async initDb(){
       let db=null;
@@ -589,8 +602,8 @@ function sys(){
           if((!has(c)||(prev!=null&&+c===+prev))&&(!has(c)||+c!==+v)){t[p][sl]=v;this.pend[this.key(t.iso)]=++this._seq;}}
         this._auto[k]=v;}));},
     persist(i){if(this.guardRO())return;const d=this.dias[i];if(!d)return;this._ver++;this.pend[this.key(d.iso)]=++this._seq;this.flushSoon();},
-    rnd(i,p,k){const a=this.dias[i]&&this.dias[i][p];if(!a)return;const v=a[k];if(has(v)&&+v!==Math.round(+v)){a[k]=Math.round(+v);this.persist(i);}},
-    rndCfg(k){const v=this.cfg[k];if(has(v)&&+v!==Math.round(+v)){this.cfg[k]=Math.round(+v);this.persistCfg();}},
+    rnd(i,p,k){const a=this.dias[i]&&this.dias[i][p];if(!a)return;const v=a[k];if(has(v)&&+v!==arred(v)){a[k]=arred(v);this.persist(i);}},
+    rndCfg(k){const v=this.cfg[k];if(has(v)&&+v!==arred(v)){this.cfg[k]=arred(v);this.persistCfg();}},
     persistCfg(){if(this.guardRO())return;this._ver++;this.cfgDirty=++this._cseq;this.flushSoon();},
     flushSoon(){this.syncTxt='Salvando…';clearTimeout(this._t);this._t=setTimeout(()=>this.flush(),500);},
     async flush(){
@@ -705,7 +718,7 @@ function sys(){
       });
       return k;
     },
-    execAuto(p,slot){return this.diasF.map(i=>{const t=this.dias.find(d=>d.iso===this.addDays(this.dias[i].iso,7));const v=t&&t[p]?t[p][slot]:null;return has(v)?Math.round(+v):null;});},
+    execAuto(p,slot){return this.diasF.map(i=>{const t=this.dias.find(d=>d.iso===this.addDays(this.dias[i].iso,7));const v=t&&t[p]?t[p][slot]:null;return has(v)?arred(v):null;});},
     ti(i,row){if(!row||!row.shift)return i;return this.dias.findIndex(d=>d.iso===this.addDays(this.dias[i].iso,row.shift));},
     /* Programação: FINALIZADO só quando a coluna tem consumo e entrega planejados + executados preenchidos (Denso e Poroso) */
     progFin(i){return this.dias[i]?this.diaFase(i)==='FINALIZADA':false;},
@@ -728,10 +741,10 @@ function sys(){
     cellVal(row,j){const r=(row.p==='D'?this.rDf:this.rPf)[j];return r?r[row.field]:null;},
     cellTxt(row,j){const v=this.cellVal(row,j);return row.kind==='p'?this.fmtPct(v):row.kind==='a'?(v==null?'—':this.fmt1(v)):this.fmt(v);},
     isManual(i,p){const v=((this.dias[i]||{})[p]||[])[4];return has(v);},
-    estShow(i,p){const r=(p==='D'?this.rD:this.rP)[i];return r?Math.round(r.ei):'';},
+    estShow(i,p){const r=(p==='D'?this.rD:this.rP)[i];return r?arred(r.ei):'';},
     /* digitar estoque = manual (recalcula NET e cascata); apagar = volta ao automático (NET da coleta -7 dias) */
     setEst(i,p,ev){const el=ev.target,t=String(el.value).trim(),d=this.dias[i];if(!d)return;
-      d[p][4]=(t===''||isNaN(+t))?null:Math.round(+t);this.persist(i);
+      d[p][4]=(t===''||isNaN(+t))?null:arred(t);this.persist(i);
       this.$nextTick(()=>{el.value=this.estShow(i,p);});},
     progBlocks(){
       const clsPct=v=>'';
@@ -808,6 +821,81 @@ function sys(){
       this.msg(n+' dia(s) adicionado(s) com consumo/entrega planejados automáticos.');
     },
     delDia(i){if(this.guardRO())return;if(confirm('Excluir este dia da programação?')){const k=this.key(this.dias[i].iso);this.dias.splice(i,1);this._ver++;this.pend[k]=++this._seq;this.flushSoon();}},
+    /* ================= PLANILHA (Programação_Nitrato.xlsm): consumo, estoque e fila da unidade SALOBO ================= */
+    carregarSheetJS(){return new Promise((ok,no)=>{if(window.XLSX)return ok(window.XLSX);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>window.XLSX?ok(window.XLSX):no();sc.onerror=no;document.head.appendChild(sc);});},
+    /* lê as 3 abas (linhas cruas) e devolve: consumo por dia/material, e estoque + fila de "hoje" */
+    lerPlanilha(S,hoje){
+      const pad=n=>String(n).padStart(2,'0');
+      const nm=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+      const num=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;let t=String(v).trim().replace(/\s/g,'');if(!t||t==='-')return null;
+        if(/,\d{1,3}$/.test(t)&&t.indexOf(',')===t.lastIndexOf(','))t=t.replace(/\./g,'').replace(',','.');else t=t.replace(/,/g,'');const n=+t;return isFinite(n)?n:null;};
+      const dia=v=>{if(v==null||v==='')return null;
+        if(v instanceof Date)return isNaN(v)?null:v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate());
+        if(typeof v==='number'){if(v>20000&&v<80000)return new Date(Date.UTC(1899,11,30)+Math.floor(v+1e-6)*864e5).toISOString().slice(0,10);return null;}
+        const t=String(v).trim();let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];
+        m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m)return(m[3].length===2?'20'+m[3]:m[3])+'-'+pad(m[2])+'-'+pad(m[1]);return null;};
+      const cols=(rows,qk)=>{for(let r=0;r<Math.min(rows.length,10);r++){const h=(rows[r]||[]).map(nm);
+        const di=h.findIndex(x=>x.indexOf('data')===0),mi=h.findIndex(x=>x==='material'),ui=h.findIndex(x=>x==='unidade'),qi=h.findIndex(x=>x.indexOf(qk)>=0);
+        if(di>=0&&mi>=0&&qi>=0)return{r,di,mi,ui,qi};}return null;};
+      const agg=(rows,qk,modo)=>{const c=cols(rows,qk);if(!c)return null;const m={};let n=0;
+        for(let r=c.r+1;r<rows.length;r++){const x=rows[r];if(!x)continue;const d=dia(x[c.di]);if(!d)continue;
+          if((c.ui>=0?nm(x[c.ui]):'salobo')!=='salobo')continue;           /* só unidade Salobo (ignora Sossego) */
+          const mt=nm(x[c.mi]),p=mt.indexOf('denso')>=0?'D':mt.indexOf('poroso')>=0?'P':null;if(!p)continue;   /* denso -> Denso, poroso -> Poroso */
+          const q=num(x[c.qi]);if(q==null)continue;
+          const o=m[d]||(m[d]={});o[p]=modo==='ult'?q:(o[p]||0)+q;n++;}
+        return{m,n};};
+      const erros=[];
+      const E=S.ESTOQUES?agg(S.ESTOQUES,'estoque','ult'):null,C=S.CONSUMO?agg(S.CONSUMO,'quantidade','soma'):null,F=S.FILA?agg(S.FILA,'quantidade','soma'):null;
+      if(!E)erros.push('aba ESTOQUES não encontrada ou sem as colunas Data/Material/Estoque');
+      if(!C)erros.push('aba CONSUMO não encontrada ou sem as colunas Data/Material/Quantidade');
+      if(!F)erros.push('aba FILA não encontrada ou sem as colunas Data/Material/Quantidade');
+      const plan={hoje};
+      ['D','P'].forEach(p=>{
+        let e=null,ed=null;
+        if(E){const ks=Object.keys(E.m).filter(d=>d<=hoje&&E.m[d][p]!=null).sort();if(ks.length){ed=ks[ks.length-1];e=E.m[ed][p];}}
+        const f=F&&F.m[hoje]&&F.m[hoje][p]!=null?F.m[hoje][p]:0;
+        plan[p]={e:e==null?null:Math.round(e*100)/100,ed,f:Math.round(f*100)/100};
+      });
+      return{erros,consumo:C?C.m:{},plan,nCons:C?C.n:0,nEst:E?E.n:0,nFila:F?F.n:0};
+    },
+    async importarPlanilha(ev){
+      const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;if(this.guardRO())return;
+      this.impBusy=true;this.imp=null;
+      try{
+        let X;try{X=await this.carregarSheetJS();}catch(e){this.imp={ok:false,titulo:'Não foi possível carregar o leitor de planilhas.',linhas:['Confira a conexão com a internet e tente de novo.']};return;}
+        const buf=await f.arrayBuffer();
+        let wb;try{wb=X.read(buf,{type:'array',sheets:['ESTOQUES','CONSUMO','FILA']});}catch(e){this.imp={ok:false,titulo:'Não consegui abrir esse arquivo.',linhas:['Use a planilha Programação_Nitrato (.xlsm ou .xlsx).']};return;}
+        const S={};['ESTOQUES','CONSUMO','FILA'].forEach(n=>{const k=wb.SheetNames.find(x=>String(x).trim().toUpperCase()===n);if(k&&wb.Sheets[k])S[n]=X.utils.sheet_to_json(wb.Sheets[k],{header:1,raw:true,defval:null});});
+        const R=this.lerPlanilha(S,this.todayISO);
+        if(R.erros.length){this.imp={ok:false,titulo:'Planilha não preenchida.',linhas:R.erros.map(x=>'• '+x)};return;}
+        const dm=iso=>this.fmtDateBR(iso).slice(0,5),L=[];
+        /* 1) CONSUMO DO DIA (pela data de ENTREGA): consumo da planilha em D vai para a coluna cuja ENTREGA (coleta + 7) é D */
+        let ach=0,mud=0,d0='',d1='';
+        this.dias.forEach((d,i)=>{const e=this.addDays(d.iso,7),c=R.consumo[e];if(!c)return;let ch=false,tem=false;
+          ['D','P'].forEach(p=>{if(c[p]==null)return;tem=true;const v=arred(c[p]);if(d[p][1]!==v){d[p][1]=v;ch=true;}});
+          if(tem){ach++;if(!d0||e<d0)d0=e;if(!d1||e>d1)d1=e;}if(ch){mud++;this.persist(i);}});
+        L.push(ach?('Consumo executado (Salobo): '+ach+' dia(s) da planilha encontrados na programação, de '+dm(d0)+' a '+dm(d1)+' (data de entrega); '+mud+' atualizado(s).'):'Consumo: nenhuma data da planilha coincide com as datas de entrega da programação.');
+        /* 2) SALDO DO DIA = estoque do dia (aba ESTOQUES) + fila de hoje (aba FILA) */
+        const h=this.dias.findIndex(d=>this.addDays(d.iso,7)===this.todayISO);let chE=false;
+        const nome={D:'Denso',P:'Poroso'},tot={};
+        ['D','P'].forEach(p=>{const pl=R.plan[p];if(pl.e==null){L.push(nome[p]+': sem estoque na aba ESTOQUES até hoje.');return;}
+          tot[p]=arred(pl.e+pl.f);
+          L.push(nome[p]+': estoque '+this.fmt1(pl.e)+(pl.ed!==this.todayISO?' (de '+dm(pl.ed)+', último dia da planilha)':'')+' + fila de hoje '+this.fmt1(pl.f)+' = '+this.fmt1(tot[p])+' t');
+          if(h>=0){const v=tot[p];if(this.dias[h][p][4]!==v){this.dias[h][p][4]=v;chE=true;}}});
+        if(chE)this.persist(h);
+        let sem=null;
+        if(h>=0){sem=this.dias[h].wk;L.push('Estoque de hoje preenchido na Programação: coluna COLETA '+dm(this.dias[h].iso)+' / ENTREGA '+dm(this.todayISO)+' (semana de '+dm(sem)+').');}
+        else L.push('Obs.: não há coluna com ENTREGA hoje na programação, então o estoque só aparece no card Saldo do dia.');
+        this.cfg.plan=R.plan;this.persistCfg();
+        this.imp={ok:true,titulo:'Planilha carregada: '+f.name,linhas:L,sem};
+        this.msg('Planilha carregada');
+      }catch(e){this.imp={ok:false,titulo:'Erro ao ler a planilha.',linhas:[String((e&&e.message)||e)]};}
+      finally{this.impBusy=false;}
+    },
+    /* card SALDO DO DIA: estoque (ESTOQUES) + fila de hoje (FILA) quando a planilha foi carregada hoje; senão, o valor da programação */
+    saldoDia(p,ei){const pl=this.cfg.plan&&this.cfg.plan.hoje===this.todayISO?this.cfg.plan[p]:null;
+      if(pl&&pl.e!=null){const f=+pl.f||0;return{v:arred(+pl.e+f),txt:'Estoque '+this.fmt1(pl.e)+(pl.ed&&pl.ed!==this.todayISO?' ('+this.fmtDateBR(pl.ed).slice(0,5)+')':'')+' + Fila '+this.fmt1(f)};}
+      return{v:ei,txt:''};},
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
     get cardMedia(){return [['D','Denso',this.media7(this.rD),'text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso',this.media7(this.rP),'text-orange-700','border-orange-300 bg-orange-50/60']].map(([k,nome,m,cor,bg])=>({k,nome,cor,bg,alerta:m!=null&&m>this.limAlerta,v:m!=null?this.fmt1(m)+' t/dia':'—'}));},
     /* PROGRAMADO A RECEBER: soma da ENTREGA EXECUTADA preenchida, das datas de entrega de amanhã até a última data com Entrega Executada preenchida (ex.: 29/10 a 02/11). Célula vazia não conta. */
