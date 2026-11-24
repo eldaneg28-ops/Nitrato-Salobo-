@@ -96,7 +96,7 @@
 
   <!-- TABS -->
   <nav class="flex gap-1 bg-white rounded-xl border border-stone-200 p-1 shadow-sm text-sm font-semibold">
-    <template x-for="t in [['painel','Painel','layout-dashboard'],['prog','Programação','calendar-days'],['demanda','Demanda de nitrato','file-spreadsheet'],['config','Config','settings']]" :key="t[0]">
+    <template x-for="t in [['painel','Painel','layout-dashboard'],['prog','Programação','calendar-days'],['coletas','Coletas agendadas','truck'],['demanda','Demanda de nitrato','file-spreadsheet'],['config','Config','settings']]" :key="t[0]">
       <button @click="setTab(t[0])" class="px-4 py-2 rounded-lg flex items-center gap-2 transition"
         :class="tab===t[0] ? 'bg-emerald-600 text-white shadow' : 'text-stone-600 hover:bg-stone-100'">
         <svg class="ic"><use :href="'#i-'+t[2]"/></svg><span x-text="t[1]"></span>
@@ -178,27 +178,6 @@
         </div>
       </template>
     </div>
-    <div class="bg-white rounded-lg border border-stone-200 shadow-sm p-3">
-      <div class="flex flex-wrap items-center gap-2 mb-2">
-        <p class="text-xs font-bold text-stone-700">Quantidade programada por semana</p>
-        <select x-model="filtroSemana" class="ml-auto px-2 py-1 border border-stone-300 rounded-lg text-xs font-semibold bg-white">
-          <option value="todas">Todas as semanas</option>
-          <template x-for="r in cardSemanas" :key="r.w"><option :value="r.w" x-text="r.label"></option></template>
-        </select>
-      </div>
-      <div class="overflow-auto">
-        <table class="w-full text-sm tbl-prog border-collapse">
-          <thead>
-            <tr class="bg-stone-100 text-stone-600 text-xs"><th class="p-1.5 text-left">Semana</th><th class="p-1.5 text-right">Denso t</th><th class="p-1.5 text-right">Denso veíc.</th><th class="p-1.5 text-right">Poroso t</th><th class="p-1.5 text-right">Poroso veíc.</th></tr>
-          </thead>
-          <tbody>
-            <template x-for="r in cardSemanasF" :key="r.w">
-              <tr :class="r.tot?'bg-stone-50 font-bold':''"><td class="p-1.5 text-stone-600 whitespace-nowrap" x-text="r.label"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.dv"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pt"></td><td class="p-1.5 text-right tabular-nums" x-text="r.pv"></td></tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
         <h3 class="font-semibold text-sm mb-3">Evolução do Saldo (NET) — projeção completa</h3>
@@ -244,16 +223,15 @@
       <button @click="addSemana()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-plus"/></svg>Adicionar dias</button>
     </div>
 
-    <!-- PROGRAMADO A RECEBER + MÉDIA DE CONSUMO -->
+    <!-- SALDO DO DIA + MÉDIA DE CONSUMO -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-      <template x-for="c in cardReceber2" :key="c.k">
-        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="c.bg">
-          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="'PROGRAMADO A RECEBER — '+c.nome"></p>
-          <div class="flex items-end justify-between gap-2 mt-1">
-            <div><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Peso total</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.peso+' t'"></p></div>
-            <div class="text-right"><p class="text-[11px] font-bold uppercase tracking-wide" :class="c.cor">Veículos</p><p class="text-xl font-extrabold leading-tight" :class="c.cor" x-text="c.veic"></p></div>
-          </div>
-          <p class="text-xs font-bold mt-1.5 pt-1.5 border-t border-stone-200" :class="c.datas?c.cor:'text-stone-400 font-medium'" x-text="c.datas||'Sem entrega executada preenchida'"></p>
+      <template x-for="c in [['D','Denso','text-emerald-700','border-emerald-300 bg-emerald-50/60',cfg.limD],['P','Poroso','text-orange-700','border-orange-300 bg-orange-50/60',cfg.limP]]" :key="'sd'+c[0]">
+        <div class="rounded-lg p-2.5 border-2 shadow-sm" :class="c[3]">
+          <p class="text-[10px] font-semibold text-stone-500 leading-tight" x-text="'SALDO DO DIA — '+c[1].toUpperCase()"></p>
+          <p class="text-[11px] font-bold uppercase tracking-wide mt-1" :class="c[2]">estoque hoje</p>
+          <p class="text-xl font-extrabold leading-tight" :class="c[2]" x-text="fmt1(saldoDia(c[0],resumo.est[c[0]].ei).v)+' t'"></p>
+          <div x-show="c[4]>0" class="h-2 rounded-full bg-white border border-stone-200 mt-1 overflow-hidden"><div class="h-full rounded-full" :class="saldoDia(c[0],resumo.est[c[0]].ei).v/c[4]>1?'bg-red-500':(c[0]==='D'?'bg-emerald-500':'bg-orange-500')" :style="'width:'+Math.min(100,Math.max(0,(saldoDia(c[0],resumo.est[c[0]].ei).v/(c[4]||1))*100))+'%'"></div></div>
+          <p x-show="saldoDia(c[0],resumo.est[c[0]].ei).txt" class="text-[11px] text-stone-500 font-medium" x-text="saldoDia(c[0],resumo.est[c[0]].ei).txt"></p>
         </div>
       </template>
       <template x-for="m in cardMedia" :key="m.k">
@@ -343,6 +321,113 @@
   </section>
 
   <!-- ================= DEMANDA DE NITRATO ================= -->
+  <!-- ================= COLETAS AGENDADAS ================= -->
+  <section x-show="tab==='coletas'" x-cloak class="space-y-3" x-init="colCarregarLS()">
+    <div class="bg-white rounded-xl border border-stone-200 shadow-sm">
+      <div class="p-3 flex flex-wrap items-center gap-2">
+        <h2 class="font-bold text-sm">Coletas agendadas</h2>
+        <span class="text-xs text-stone-400" x-text="coletasF.length+' de '+coletas.length+' coleta(s)'"></span>
+        <span x-show="colFile" class="text-xs text-stone-400" x-text="'· '+colFile+(colAt?' · '+colAt:'')"></span>
+        <div class="ml-auto flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <select x-model="colSem" class="px-3 py-2 border border-stone-300 rounded-lg bg-white">
+            <option value="todas">Todas as semanas</option>
+            <template x-for="w in colSemanas" :key="'cs'+w"><option :value="w" x-text="weekLabel(w)"></option></template>
+          </select>
+          <select x-model="colMat" class="px-3 py-2 border border-stone-300 rounded-lg bg-white">
+            <option value="todos">Todos os materiais</option>
+            <template x-for="m in colMateriais" :key="'cm'+m"><option :value="m" x-text="m"></option></template>
+          </select>
+          <select x-model="colSt" class="px-3 py-2 border border-stone-300 rounded-lg bg-white">
+            <option value="todos">Todos os status</option>
+            <template x-for="s in colStatusList" :key="'cst'+s"><option :value="s" x-text="s"></option></template>
+          </select>
+          <button x-show="colSelN>0" @click="colExcluirSel()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-trash-2"/></svg><span x-text="'Excluir selecionadas ('+colSelN+')'"></span></button>
+          <label class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition cursor-pointer" :class="colBusy?'opacity-60 pointer-events-none':''" title="Escolha a planilha de coletas agendadas (.xlsx/.xlsm/.xls/.csv)"><svg class="ic"><use href="#i-file-spreadsheet"/></svg><span x-text="colBusy?'Lendo planilha…':'Atualizar planilha'"></span><input type="file" accept=".xlsx,.xlsm,.xls,.csv" class="hidden" @change="atualizarColetas($event)"></label>
+          <button @click="exportRelatorioColetas()" class="px-3 py-2 bg-stone-800 hover:bg-stone-900 text-white rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>Exportar relatório</button>
+        </div>
+      </div>
+      <p x-show="colMsg" class="mx-3 mb-3 text-xs rounded-lg border border-amber-300 bg-amber-50 text-amber-900 px-3 py-2" x-text="colMsg"></p>
+      <div class="overflow-auto max-h-[70vh] border-t border-stone-200">
+        <table class="w-full text-sm border-collapse">
+          <thead class="sticky top-0 bg-stone-100 text-stone-700 text-xs">
+            <tr>
+              <th class="p-2 w-8"><input type="checkbox" class="w-4 h-4 accent-emerald-600 cursor-pointer" title="Selecionar todas as coletas filtradas" :checked="coletasF.length>0&&colSelN===coletasF.length" @change="colSelTodas($event.target.checked)"></th>
+              <th class="p-2 text-left font-bold">Fornecedor</th>
+              <th class="p-2 text-left font-bold">Fila (material)</th>
+              <th class="p-2 text-right font-bold">Peso</th>
+              <th class="p-2 text-right font-bold">Veículos</th>
+              <th class="p-2 text-left font-bold">Início da janela de recebimento</th>
+              <th class="p-2 text-left font-bold">Conclusão passaporte</th>
+              <th class="p-2 text-left font-bold">ASN</th>
+              <th class="p-2 text-left font-bold">Status</th>
+              <th class="p-2 w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="r in coletasF" :key="r.id">
+              <tr class="border-t border-stone-100 hover:bg-stone-50" :class="colSel[r.id]?'bg-emerald-50/60':''">
+                <td class="p-2"><input type="checkbox" class="w-4 h-4 accent-emerald-600 cursor-pointer" :checked="!!colSel[r.id]" @change="colSel[r.id]=$event.target.checked"></td>
+                <td class="p-2" x-text="r.forn||'—'"></td>
+                <td class="p-2" x-text="r.fila"></td>
+                <td class="p-2 text-right tabular-nums" x-text="colPeso(r.peso)"></td>
+                <td class="p-2 text-right tabular-nums" x-text="r.vei"></td>
+                <td class="p-1.5 whitespace-nowrap">
+                  <input type="date" title="Editar a data da coleta" class="px-1.5 py-1 border border-stone-300 rounded-md text-xs bg-white focus:outline-none focus:border-emerald-500" style="width:8.6rem" :value="r.ini?r.ini.iso:''" @change="colSetData(r,$event.target.value,'d')">
+                  <input type="time" title="Editar o horário" class="px-1.5 py-1 border border-stone-300 rounded-md text-xs bg-white focus:outline-none focus:border-emerald-500 ml-1" style="width:5.6rem" :value="r.ini?r.ini.hm:''" @change="colSetData(r,$event.target.value,'t')">
+                </td>
+                <td class="p-2 whitespace-nowrap" x-text="r.pass||'—'"></td>
+                <td class="p-2 whitespace-nowrap" x-text="r.asn||'—'"></td>
+                <td class="p-2"><span x-show="r.st" class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold" x-text="r.st"></span></td>
+                <td class="p-2 text-center"><button @click="colExcluir(r)" class="p-1.5 rounded-md text-stone-400 hover:text-red-600 hover:bg-red-50 transition" title="Excluir esta coleta"><svg class="ic"><use href="#i-trash-2"/></svg></button></td>
+              </tr>
+            </template>
+            <tr x-show="!coletas.length"><td colspan="10" class="p-6 text-center text-stone-400 text-sm">Nenhuma coleta carregada. Clique em <b>Atualizar planilha</b> e escolha a planilha de coletas agendadas.</td></tr>
+            <tr x-show="coletas.length&&!coletasF.length"><td colspan="10" class="p-6 text-center text-stone-400 text-sm">Nenhuma coleta para os filtros escolhidos.</td></tr>
+          </tbody>
+          <tfoot x-show="coletasF.length" class="sticky bottom-0 bg-sky-100 text-red-700 font-bold">
+            <tr><td class="p-2" colspan="3">Total geral</td><td class="p-2 text-right tabular-nums" x-text="colPeso(colTot.p)"></td><td class="p-2 text-right tabular-nums" x-text="colTot.v"></td><td colspan="5"></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABELAS DINÂMICAS (seguem os filtros acima) -->
+    <div x-show="coletasF.length" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-3">
+        <p class="text-xs font-bold text-stone-700 mb-2">Tabela dinâmica — por fila e data</p>
+        <div class="overflow-auto max-h-[60vh]">
+          <table class="w-full text-sm border-collapse">
+            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300">Agendados/Confirmados</th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
+            <tbody>
+              <template x-for="r in colPivotFilaRows" :key="r.k">
+                <tr :class="r.g?'bg-sky-200 font-bold':''">
+                  <td class="p-1.5 border border-stone-300" :class="r.g?'':'text-center'" x-text="r.l"></td>
+                  <td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(r.p)"></td>
+                  <td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="r.v"></td>
+                </tr>
+              </template>
+              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTot.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTot.v"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-3">
+        <p class="text-xs font-bold text-stone-700 mb-2">Tabela dinâmica — por data (sem material)</p>
+        <div class="overflow-auto max-h-[60vh]">
+          <table class="w-full text-sm border-collapse">
+            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300">Data</th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
+            <tbody>
+              <template x-for="d in colPivotData" :key="'pd'+d.iso">
+                <tr><td class="p-1.5 border border-stone-300 text-center" x-text="d.iso?fmtDateBR(d.iso):'(sem data)'"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(d.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="d.v"></td></tr>
+              </template>
+              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTot.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTot.v"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section x-show="tab==='demanda'" x-cloak class="space-y-3">
     <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-3 flex flex-wrap items-center gap-3">
       <button @click="prevWeek()" class="px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm font-semibold">‹</button>
@@ -454,7 +539,7 @@ function sys(){
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   const memo={ver:-1,fk:'',D:null,P:null,F:null,Df:null,Pf:null,pr:null};
   return {
-    cloud:false, imp:null, impBusy:false, _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, imp:null, impBusy:false, coletas:[], colSel:{}, colPesoFixo:47, colFile:'', colAt:'', colBusy:false, colSem:'todas', colMat:'todos', colSt:'todos', colMsg:'', _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -864,8 +949,8 @@ function sys(){
       try{
         let X;try{X=await this.carregarSheetJS();}catch(e){this.imp={ok:false,titulo:'Não foi possível carregar o leitor de planilhas.',linhas:['Confira a conexão com a internet e tente de novo.']};return;}
         const buf=await f.arrayBuffer();
-        let wb;try{wb=X.read(buf,{type:'array',sheets:['ESTOQUES','CONSUMO','FILA']});}catch(e){this.imp={ok:false,titulo:'Não consegui abrir esse arquivo.',linhas:['Use a planilha Programação_Nitrato (.xlsm ou .xlsx).']};return;}
-        const S={};['ESTOQUES','CONSUMO','FILA'].forEach(n=>{const k=wb.SheetNames.find(x=>String(x).trim().toUpperCase()===n);if(k&&wb.Sheets[k])S[n]=X.utils.sheet_to_json(wb.Sheets[k],{header:1,raw:true,defval:null});});
+        let wb;try{wb=X.read(buf,{type:'array',sheets:['ESTOQUES','CONSUMO','FILA','CARREGAMENTO DE MATERIAL']});}catch(e){this.imp={ok:false,titulo:'Não consegui abrir esse arquivo.',linhas:['Use a planilha Programação_Nitrato (.xlsm ou .xlsx).']};return;}
+        const S={};['ESTOQUES','CONSUMO','FILA','CARREGAMENTO DE MATERIAL'].forEach(n=>{const k=wb.SheetNames.find(x=>String(x).trim().toUpperCase()===n);if(k&&wb.Sheets[k])S[n]=X.utils.sheet_to_json(wb.Sheets[k],{header:1,raw:true,defval:null});});
         const R=this.lerPlanilha(S,this.todayISO);
         if(R.erros.length){this.imp={ok:false,titulo:'Planilha não preenchida.',linhas:R.erros.map(x=>'• '+x)};return;}
         const dm=iso=>this.fmtDateBR(iso).slice(0,5),L=[];
@@ -875,6 +960,16 @@ function sys(){
           ['D','P'].forEach(p=>{if(c[p]==null)return;tem=true;const v=arred(c[p]);if(d[p][1]!==v){d[p][1]=v;ch=true;}});
           if(tem){ach++;if(!d0||e<d0)d0=e;if(!d1||e>d1)d1=e;}if(ch){mud++;this.persist(i);}});
         L.push(ach?('Consumo executado (Salobo): '+ach+' dia(s) da planilha encontrados na programação, de '+dm(d0)+' a '+dm(d1)+' (data de entrega); '+mud+' atualizado(s).'):'Consumo: nenhuma data da planilha coincide com as datas de entrega da programação.');
+        /* 1b) ENTREGA EXECUTADA (aba CARREGAMENTO DE MATERIAL): soma por Data Coleta e material -> coluna da programação com essa coleta */
+        if(!S['CARREGAMENTO DE MATERIAL'])L.push('Entrega executada: aba CARREGAMENTO DE MATERIAL não encontrada (nada alterado).');
+        else{const CR=this.lerCarregamento(S['CARREGAMENTO DE MATERIAL']);
+          if(!CR)L.push('Entrega executada: aba CARREGAMENTO DE MATERIAL sem as colunas Data/Material/Quantidade (nada alterado).');
+          else{let a2=0,m2=0,e0='',e1='';
+            this.dias.forEach((d,i)=>{const c=CR.m[d.iso];if(!c)return;let ch=false,tem=false;
+              ['D','P'].forEach(p=>{if(c[p]==null)return;tem=true;const v=arred(c[p]);if(d[p][3]!==v){d[p][3]=v;ch=true;}});
+              if(tem){a2++;if(!e0||d.iso<e0)e0=d.iso;if(!e1||d.iso>e1)e1=d.iso;}if(ch){m2++;this.persist(i);}});
+            L.push(a2?('Entrega executada (aba CARREGAMENTO DE MATERIAL): '+a2+' dia(s) de coleta encontrados na programação, de '+dm(e0)+' a '+dm(e1)+'; '+m2+' atualizado(s).'):'Entrega executada: nenhuma Data Coleta da aba CARREGAMENTO DE MATERIAL coincide com a programação.');
+            if(CR.semQtd)L.push('Obs.: '+CR.semQtd+' linha(s) de Salobo sem quantidade válida (ex.: #REF!) foram ignoradas.');}}
         /* 2) SALDO DO DIA = estoque do dia (aba ESTOQUES) + fila de hoje (aba FILA) */
         const h=this.dias.findIndex(d=>this.addDays(d.iso,7)===this.todayISO);let chE=false;
         const nome={D:'Denso',P:'Poroso'},tot={};
@@ -896,6 +991,137 @@ function sys(){
     saldoDia(p,ei){const pl=this.cfg.plan&&this.cfg.plan.hoje===this.todayISO?this.cfg.plan[p]:null;
       if(pl&&pl.e!=null){const f=+pl.f||0;return{v:arred(+pl.e+f),txt:'Estoque '+this.fmt1(pl.e)+(pl.ed&&pl.ed!==this.todayISO?' ('+this.fmtDateBR(pl.ed).slice(0,5)+')':'')+' + Fila '+this.fmt1(f)};}
       return{v:ei,txt:''};},
+    /* ================= ENTREGA EXECUTADA (aba CARREGAMENTO DE MATERIAL) ================= */
+    /* soma a Quantidade por Data Coleta e material (Denso/Poroso), só unidade Salobo; ASN repetida conta uma vez */
+    lerCarregamento(rows){
+      const pad=n=>String(n).padStart(2,'0');
+      const nm=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+      const num=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;let t=String(v).trim().replace(/\s/g,'');if(!t||t==='-')return null;
+        if(/,\d{1,3}$/.test(t)&&t.indexOf(',')===t.lastIndexOf(','))t=t.replace(/\./g,'').replace(',','.');else t=t.replace(/,/g,'');const n=+t;return isFinite(n)?n:null;};
+      const dia=v=>{if(v==null||v==='')return null;
+        if(v instanceof Date)return isNaN(v)?null:v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate());
+        if(typeof v==='number'){if(v>20000&&v<80000)return new Date(Date.UTC(1899,11,30)+Math.floor(v+1e-6)*864e5).toISOString().slice(0,10);return null;}
+        const t=String(v).trim();let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];
+        m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(m)return(m[3].length===2?'20'+m[3]:m[3])+'-'+pad(m[2])+'-'+pad(m[1]);return null;};
+      let c=null;
+      for(let r=0;r<Math.min(rows.length,10)&&!c;r++){const h=(rows[r]||[]).map(nm);
+        const di=h.findIndex(x=>x.indexOf('data')===0),mi=h.findIndex(x=>x==='material'),ui=h.findIndex(x=>x==='unidade'),qi=h.findIndex(x=>x.indexOf('quantidade')>=0),ai=h.findIndex(x=>x.indexOf('asn')>=0);
+        if(di>=0&&mi>=0&&qi>=0)c={r,di,mi,ui,qi,ai};}
+      if(!c)return null;
+      const m={},seen=new Set();let n=0,semQtd=0;
+      for(let r=c.r+1;r<rows.length;r++){const x=rows[r];if(!x)continue;const d=dia(x[c.di]);if(!d)continue;
+        if((c.ui>=0?nm(x[c.ui]):'salobo')!=='salobo')continue;
+        const mt=nm(x[c.mi]),p=mt.indexOf('denso')>=0?'D':mt.indexOf('poroso')>=0?'P':null;if(!p)continue;
+        if(c.ai>=0){const a=String(x[c.ai]==null?'':x[c.ai]).trim();if(a){if(seen.has(a))continue;seen.add(a);}}
+        const q=num(x[c.qi]);if(q==null){semQtd++;continue;}
+        const o=m[d]||(m[d]={});o[p]=(o[p]||0)+q;n++;}
+      return{m,n,semQtd};
+    },
+    /* ================= COLETAS AGENDADAS ================= */
+    colNm(t){return String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();},
+    colNum(v){if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;let t=String(v).trim().replace(/\s/g,'');if(!t||t==='-')return null;
+      if(/,\d{1,3}$/.test(t)&&t.indexOf(',')===t.lastIndexOf(','))t=t.replace(/\./g,'').replace(',','.');else t=t.replace(/,/g,'');const n=+t;return isFinite(n)?n:null;},
+    /* data (com hora opcional) -> {iso,hm,ts}; serial do Excel, Date ou texto dd/mm/aaaa hh:mm */
+    colDT(v){const pad=n=>String(n).padStart(2,'0');if(v==null||v==='')return null;
+      if(v instanceof Date){if(isNaN(v))return null;const hm=pad(v.getHours())+':'+pad(v.getMinutes());return{iso:v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate()),hm:hm==='00:00'?'':hm,ts:v.getTime()};}
+      if(typeof v==='number'){if(v<20000||v>80000)return null;const ms=Math.round((v-25569)*864e5),d=new Date(ms),hm=d.toISOString().slice(11,16);return{iso:d.toISOString().slice(0,10),hm:hm==='00:00'?'':hm,ts:ms};}
+      const t=String(v).trim();let m=t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T]+(\d{1,2}):(\d{2}))?/);
+      if(m)return{iso:m[1]+'-'+m[2]+'-'+m[3],hm:m[4]?pad(m[4])+':'+m[5]:'',ts:Date.UTC(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0))};
+      m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T,]+(\d{1,2}):(\d{2}))?/);
+      if(m){const y=m[3].length===2?'20'+m[3]:m[3];return{iso:y+'-'+pad(m[2])+'-'+pad(m[1]),hm:m[4]?pad(m[4])+':'+m[5]:'',ts:Date.UTC(+y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0))};}
+      return null;},
+    colFmtDT(d){return d?this.fmtDateBR(d.iso)+(d.hm?' '+d.hm:''):'';},
+    /* procura, em todas as abas, a tabela de coletas (cabeçalho com Fila + Peso + Início da janela) */
+    colLer(X,wb){
+      const nm=this.colNm.bind(this);let best=null;const falta=[];
+      const K=[['forn',h=>h.indexOf('fornecedor')>=0&&h.indexOf('cod')<0],['forn2',h=>h.indexOf('fornecedor')>=0||h.indexOf('transportadora')>=0],
+        ['fila',h=>h.indexOf('fila')>=0],['fila2',h=>h==='material'||h.indexOf('tipo de carga')>=0],
+        ['peso',h=>h.indexOf('peso')>=0],['peso2',h=>h==='quantidade'||h.indexOf('tonelada')>=0],
+        ['vei',h=>h.indexOf('veiculo')>=0],
+        ['ini',h=>h.indexOf('inicio')>=0&&h.indexOf('janela')>=0],['ini2',h=>h.indexOf('janela')>=0],
+        ['pass',h=>h.indexOf('passaporte')>=0],['asn',h=>h.indexOf('asn')>=0],['st',h=>h.indexOf('status')>=0]];
+      wb.SheetNames.forEach(sn=>{const sh=wb.Sheets[sn];if(!sh)return;let rows;try{rows=X.utils.sheet_to_json(sh,{header:1,raw:true,defval:null});}catch(e){return;}
+        for(let r=0;r<Math.min(rows.length,25);r++){const h=(rows[r]||[]).map(nm),col={};
+          K.forEach(([k,f])=>{const i=h.findIndex((x,ix)=>x&&f(x)&&!Object.values(col).includes(ix));if(i>=0)col[k]=i;});
+          const C={forn:col.forn!=null?col.forn:col.forn2,fila:col.fila!=null?col.fila:col.fila2,peso:col.peso!=null?col.peso:col.peso2,vei:col.vei,ini:col.ini!=null?col.ini:col.ini2,pass:col.pass,asn:col.asn,st:col.st};
+          if(C.fila==null||C.ini==null){if(C.fila!=null||C.ini!=null)falta.push(sn+' (linha '+(r+1)+'): faltou '+[C.fila==null?'Fila':'',C.ini==null?'Início da janela':''].filter(Boolean).join(', '));continue;}
+          const out=[];
+          for(let i=r+1;i<rows.length;i++){const x=rows[i];if(!x)continue;const fila=String(x[C.fila]==null?'':x[C.fila]).trim();if(!fila)continue;
+            const ini=this.colDT(x[C.ini]);if(!ini)continue;
+            const t=nm(fila),mat=t.indexOf('denso')>=0?'Nitrato Denso':t.indexOf('poroso')>=0?'Nitrato Poroso':fila;
+            const pv=C.pass!=null?x[C.pass]:null,pd=this.colDT(pv);
+                        out.push({forn:C.forn!=null&&x[C.forn]!=null?String(x[C.forn]).trim():'',fila,mat,id:'c'+Date.now().toString(36)+'-'+out.length,peso:this.colPesoFixo,vei:1,ini,pass:pd?this.colFmtDT(pd):(pv==null?'':String(pv).trim()),asn:C.asn!=null&&x[C.asn]!=null?String(x[C.asn]).trim():'',st:C.st!=null&&x[C.st]!=null?String(x[C.st]).trim():''});}
+          if(out.length&&(!best||out.length>best.rows.length))best={sheet:sn,rows:out};
+          break;}});
+      return best?{ok:true,...best}:{ok:false,falta};
+    },
+    colCarregarLS(){try{const s=JSON.parse(localStorage.getItem('nitrato-salobo-coletas-v1'));if(s&&Array.isArray(s.rows)){this.coletas=s.rows.map((r,i)=>({...r,id:r.id||('l'+i),peso:this.colPesoFixo,vei:1}));this.colFile=s.file||'';this.colAt=s.at||'';}}catch(e){}},
+    colSalvar(){if(this.colSt!=='todos'&&!this.colStatusList.includes(this.colSt))this.colSt='todos';if(this.colMat!=='todos'&&!this.colMateriais.includes(this.colMat))this.colMat='todos';if(this.colSem!=='todas'&&!this.colSemanas.includes(this.colSem))this.colSem='todas';try{localStorage.setItem('nitrato-salobo-coletas-v1',JSON.stringify({file:this.colFile,at:this.colAt,rows:this.coletas}));}catch(e){}},
+    /* edita a data (tipo 'd') ou o horário (tipo 't') do início da janela de uma coleta */
+    colSetData(r,v,tipo){const iso=tipo==='d'?v:(r.ini?r.ini.iso:''),hm=tipo==='t'?v:(r.ini?r.ini.hm:'');
+      if(!iso){if(tipo==='d')r.ini=null;this.colSalvar();return;}
+      const[y,m,d]=iso.split('-').map(Number),[h,mi]=(hm||'00:00').split(':').map(Number);
+      r.ini={iso,hm:hm||'',ts:Date.UTC(y,m-1,d,h||0,mi||0)};this.colSalvar();},
+    colExcluir(r){if(!confirm('Excluir esta coleta?'))return;this.coletas=this.coletas.filter(x=>x.id!==r.id);delete this.colSel[r.id];this.colSalvar();this.msg('Coleta excluída');},
+    get colSelN(){return this.coletasF.filter(r=>this.colSel[r.id]).length;},
+    colSelTodas(on){const s={...this.colSel};this.coletasF.forEach(r=>{if(on)s[r.id]=true;else delete s[r.id];});this.colSel=s;},
+    /* exclusão em massa: apaga as coletas marcadas (use o checkbox do cabeçalho para marcar todas as filtradas) */
+    colExcluirSel(){const ids=new Set(this.coletasF.filter(r=>this.colSel[r.id]).map(r=>r.id));if(!ids.size)return;
+      if(!confirm('Excluir '+ids.size+' coleta(s) selecionada(s)?'))return;
+      this.coletas=this.coletas.filter(r=>!ids.has(r.id));this.colSel={};this.colSalvar();this.msg(ids.size+' coleta(s) excluída(s)');},
+    async atualizarColetas(ev){
+      const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
+      this.colBusy=true;this.colMsg='';
+      try{
+        let X;try{X=await this.carregarSheetJS();}catch(e){this.colMsg='Não foi possível carregar o leitor de planilhas. Confira a internet e tente de novo.';return;}
+        const buf=await f.arrayBuffer();let wb;
+        try{wb=X.read(buf,{type:'array'});}catch(e){this.colMsg='Não consegui abrir esse arquivo (use .xlsx, .xlsm, .xls ou .csv).';return;}
+        const R=this.colLer(X,wb);
+        if(!R.ok){this.colMsg='Não encontrei a tabela de coletas. Preciso de colunas Fila e Início da janela de recebimento.'+(R.falta.length?' Achei: '+R.falta.slice(0,3).join(' · '):'');return;}
+        this.coletas=R.rows;this.colFile=f.name;this.colAt=new Date().toLocaleString('pt-BR');
+        this.colSem='todas';this.colMat='todos';this.colSt='todos';this.colSel={};
+        this.colSalvar();
+        this.msg('Coletas atualizadas: '+R.rows.length);
+      }catch(e){this.colMsg='Erro ao ler a planilha: '+String((e&&e.message)||e);}
+      finally{this.colBusy=false;}
+    },
+    get colSemanas(){return [...new Set(this.coletas.filter(r=>r.ini).map(r=>this.mondayOf(r.ini.iso)))].sort();},
+    get colMateriais(){return [...new Set(this.coletas.map(r=>r.mat))].sort();},
+    get colStatusList(){return [...new Set(this.coletas.map(r=>r.st).filter(Boolean))].sort();},
+    get coletasF(){return this.coletas.filter(r=>(this.colSem==='todas'||(r.ini&&this.mondayOf(r.ini.iso)===this.colSem))&&(this.colMat==='todos'||r.mat===this.colMat)&&(this.colSt==='todos'||r.st===this.colSt))
+      .slice().sort((a,b)=>((a.ini&&a.ini.ts)||0)-((b.ini&&b.ini.ts)||0));},
+    get colTot(){return this.coletasF.reduce((a,r)=>{a.p+=+r.peso||0;a.v+=+r.vei||0;return a;},{p:0,v:0});},
+    colPeso(v){return(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3});},
+    /* TABELAS DINÂMICAS (sobre as coletas filtradas): 1) Fila > Data  2) só por Data (sem material) */
+    get colPivotFila(){const g={};this.coletasF.forEach(r=>{const d=r.ini?r.ini.iso:'',a=g[r.fila]||(g[r.fila]={fila:r.fila,p:0,v:0,m:{}}),b=a.m[d]||(a.m[d]={iso:d,p:0,v:0});
+        a.p+=+r.peso||0;a.v+=+r.vei||0;b.p+=+r.peso||0;b.v+=+r.vei||0;});
+      return Object.values(g).sort((x,y)=>x.fila<y.fila?-1:1).map(a=>({fila:a.fila,p:a.p,v:a.v,datas:Object.values(a.m).sort((x,y)=>x.iso<y.iso?-1:1)}));},
+    get colPivotFilaRows(){const o=[];this.colPivotFila.forEach(a=>{o.push({k:'g'+a.fila,g:true,l:a.fila,p:a.p,v:a.v});a.datas.forEach(d=>o.push({k:'d'+a.fila+'|'+d.iso,g:false,l:d.iso?this.fmtDateBR(d.iso):'(sem data)',p:d.p,v:d.v}));});return o;},
+    get colPivotData(){const m={};this.coletasF.forEach(r=>{const d=r.ini?r.ini.iso:'',b=m[d]||(m[d]={iso:d,p:0,v:0});b.p+=+r.peso||0;b.v+=+r.vei||0;});
+      return Object.values(m).sort((x,y)=>x.iso<y.iso?-1:1);},
+    colPeso2(v){return(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});},
+    /* relatório: aba 1 = Fila > Data; aba 2 = só por Data (sem material) */
+    async exportRelatorioColetas(){
+      const rows=this.coletasF;if(!rows.length){this.msg('Não há coletas para exportar.');return;}
+      let X;try{X=await this.carregarExcelJS();}catch(e){this.msg('Não foi possível gerar o Excel agora.');return;}
+      try{
+        const wb=new X.Workbook();
+        const fill=h=>({type:'pattern',pattern:'solid',fgColor:{argb:'FF'+h}}),thin={style:'thin',color:{argb:'FFBFBFBF'}},bd={top:thin,bottom:thin,left:thin,right:thin};
+        const mk=(nome,cab)=>{const ws=wb.addWorksheet(nome);ws.columns=[{width:34},{width:18},{width:20}];
+          const put=(vals,o)=>{const row=ws.addRow(vals);row.eachCell((c,j)=>{c.border=bd;c.font={name:'Arial',size:11,bold:!!o.bold,color:{argb:o.color||'FF000000'}};if(o.fill)c.fill=fill(o.fill);
+            if(j>1){c.alignment={horizontal:'right'};c.numFmt=j===2?'#,##0.00':'0';}else c.alignment={horizontal:o.center?'center':'left'};});return row;};
+          put([cab,'Soma de peso','Soma de veículos'],{bold:true,fill:'F2F2F2'});ws.views=[{state:'frozen',ySplit:1}];return put;};
+        const T=this.colTot,dt=iso=>iso?this.fmtDateBR(iso):'(sem data)';
+        const p1=mk('Relatório','Agendados/Confirmados');
+        this.colPivotFila.forEach(a=>{p1([a.fila,+a.p.toFixed(2),a.v],{bold:true,fill:'9DC3E6'});a.datas.forEach(d=>p1([dt(d.iso),+d.p.toFixed(2),d.v],{center:true}));});
+        p1(['Total Geral',+T.p.toFixed(2),T.v],{bold:true,fill:'BDD7EE',color:'FFC00000'});
+        const p2=mk('Por data','Data');
+        this.colPivotData.forEach(d=>p2([dt(d.iso),+d.p.toFixed(2),d.v],{center:true}));
+        p2(['Total Geral',+T.p.toFixed(2),T.v],{bold:true,fill:'BDD7EE',color:'FFC00000'});
+        const buf=await wb.xlsx.writeBuffer();
+        await this.baixar(buf,'Relatório coletas agendadas.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      }catch(e){this.msg('Não foi possível gerar o relatório.');}
+    },
     carregarExcelJS(){return new Promise((ok,no)=>{if(window.ExcelJS)return ok(window.ExcelJS);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no();sc.onerror=no;document.head.appendChild(sc);});},
     get cardMedia(){return [['D','Denso',this.media7(this.rD),'text-emerald-700','border-emerald-300 bg-emerald-50/60'],['P','Poroso',this.media7(this.rP),'text-orange-700','border-orange-300 bg-orange-50/60']].map(([k,nome,m,cor,bg])=>({k,nome,cor,bg,alerta:m!=null&&m>this.limAlerta,v:m!=null?this.fmt1(m)+' t/dia':'—'}));},
     /* PROGRAMADO A RECEBER: soma da ENTREGA EXECUTADA preenchida, das datas de entrega de amanhã até a última data com Entrega Executada preenchida (ex.: 29/10 a 02/11). Célula vazia não conta. */
