@@ -352,14 +352,14 @@
           <thead class="sticky top-0 bg-stone-100 text-stone-700 text-xs">
             <tr>
               <th class="p-2 w-8"><input type="checkbox" class="w-4 h-4 accent-emerald-600 cursor-pointer" title="Selecionar todas as coletas filtradas" :checked="coletasF.length>0&&colSelN===coletasF.length" @change="colSelTodas($event.target.checked)"></th>
-              <th class="p-2 text-left font-bold">Fornecedor</th>
-              <th class="p-2 text-left font-bold">Fila (material)</th>
-              <th class="p-2 text-right font-bold">Peso</th>
-              <th class="p-2 text-right font-bold">Veículos</th>
-              <th class="p-2 text-left font-bold">Início da janela de recebimento</th>
-              <th class="p-2 text-left font-bold">Conclusão passaporte</th>
-              <th class="p-2 text-left font-bold">ASN</th>
-              <th class="p-2 text-left font-bold">Status</th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('forn')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Fornecedor">Fornecedor <span :class="colCol==='forn'?'text-stone-700':'text-stone-300'" x-text="colSeta('forn')"></span></button></th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('fila')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Fila (material)">Fila (material) <span :class="colCol==='fila'?'text-stone-700':'text-stone-300'" x-text="colSeta('fila')"></span></button></th>
+              <th class="p-2 text-right font-bold"><button type="button" @click="colOrdenar('peso')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Peso">Peso <span :class="colCol==='peso'?'text-stone-700':'text-stone-300'" x-text="colSeta('peso')"></span></button></th>
+              <th class="p-2 text-right font-bold"><button type="button" @click="colOrdenar('vei')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Veículos">Veículos <span :class="colCol==='vei'?'text-stone-700':'text-stone-300'" x-text="colSeta('vei')"></span></button></th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('ini')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Início da janela de recebimento">Início da janela de recebimento <span :class="colCol==='ini'?'text-stone-700':'text-stone-300'" x-text="colSeta('ini')"></span></button></th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('pass')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Conclusão passaporte">Conclusão passaporte <span :class="colCol==='pass'?'text-stone-700':'text-stone-300'" x-text="colSeta('pass')"></span></button></th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('asn')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por ASN">ASN <span :class="colCol==='asn'?'text-stone-700':'text-stone-300'" x-text="colSeta('asn')"></span></button></th>
+              <th class="p-2 text-left font-bold"><button type="button" @click="colOrdenar('st')" class="inline-flex items-center gap-1 select-none hover:text-stone-900" title="Ordenar por Status">Status <span :class="colCol==='st'?'text-stone-700':'text-stone-300'" x-text="colSeta('st')"></span></button></th>
               <th class="p-2 w-10"></th>
             </tr>
           </thead>
@@ -392,12 +392,13 @@
     </div>
 
     <!-- TABELAS DINÂMICAS (seguem os filtros acima) -->
+    <p x-show="colPassN>0" class="text-xs rounded-lg border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2" x-text="colPassN+' coleta(s) com data de Conclusão passaporte não entram nas tabelas dinâmicas.'"></p>
     <div x-show="coletasF.length" class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       <div class="bg-white rounded-xl border border-stone-200 shadow-sm p-3">
         <p class="text-xs font-bold text-stone-700 mb-2">Tabela dinâmica — por fila e data</p>
         <div class="overflow-auto max-h-[60vh]">
           <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300">Agendados/Confirmados</th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
+            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300"><button type="button" @click="colOrdenar('ini')" class="inline-flex items-center gap-1 select-none" title="Ordenar datas">Agendados/Confirmados <span :class="colCol==='ini'?'text-stone-700':'text-stone-300'" x-text="colSeta('ini')"></span></button></th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
             <tbody>
               <template x-for="r in colPivotFilaRows" :key="r.k">
                 <tr :class="r.g?'bg-sky-200 font-bold':''">
@@ -406,7 +407,7 @@
                   <td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="r.v"></td>
                 </tr>
               </template>
-              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTot.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTot.v"></td></tr>
+              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTotPiv.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTotPiv.v"></td></tr>
             </tbody>
           </table>
         </div>
@@ -415,12 +416,12 @@
         <p class="text-xs font-bold text-stone-700 mb-2">Tabela dinâmica — por data (sem material)</p>
         <div class="overflow-auto max-h-[60vh]">
           <table class="w-full text-sm border-collapse">
-            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300">Data</th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
+            <thead><tr class="bg-stone-100 text-stone-700 text-xs"><th class="p-1.5 text-left border border-stone-300"><button type="button" @click="colOrdenar('ini')" class="inline-flex items-center gap-1 select-none" title="Ordenar datas">Data <span :class="colCol==='ini'?'text-stone-700':'text-stone-300'" x-text="colSeta('ini')"></span></button></th><th class="p-1.5 text-right border border-stone-300">Soma de peso</th><th class="p-1.5 text-right border border-stone-300">Soma de veículos</th></tr></thead>
             <tbody>
               <template x-for="d in colPivotData" :key="'pd'+d.iso">
                 <tr><td class="p-1.5 border border-stone-300 text-center" x-text="d.iso?fmtDateBR(d.iso):'(sem data)'"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(d.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="d.v"></td></tr>
               </template>
-              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTot.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTot.v"></td></tr>
+              <tr class="bg-sky-100 font-bold text-red-700"><td class="p-1.5 border border-stone-300">Total Geral</td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colPeso2(colTotPiv.p)"></td><td class="p-1.5 border border-stone-300 text-right tabular-nums" x-text="colTotPiv.v"></td></tr>
             </tbody>
           </table>
         </div>
@@ -539,7 +540,7 @@ function sys(){
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   const memo={ver:-1,fk:'',D:null,P:null,F:null,Df:null,Pf:null,pr:null};
   return {
-    cloud:false, imp:null, impBusy:false, coletas:[], colSel:{}, colPesoFixo:47, colFile:'', colAt:'', colBusy:false, colSem:'todas', colMat:'todos', colSt:'todos', colMsg:'', _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, imp:null, impBusy:false, coletas:[], colSel:{}, colOrd:'asc', colCol:'ini', colPesoFixo:47, colFile:'', colAt:'', colBusy:false, colSem:'todas', colMat:'todos', colSt:'todos', colMsg:'', _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -1089,20 +1090,32 @@ function sys(){
     get colMateriais(){return [...new Set(this.coletas.map(r=>r.mat))].sort();},
     get colStatusList(){return [...new Set(this.coletas.map(r=>r.st).filter(Boolean))].sort();},
     get coletasF(){return this.coletas.filter(r=>(this.colSem==='todas'||(r.ini&&this.mondayOf(r.ini.iso)===this.colSem))&&(this.colMat==='todos'||r.mat===this.colMat)&&(this.colSt==='todos'||r.st===this.colSt))
-      .slice().sort((a,b)=>((a.ini&&a.ini.ts)||0)-((b.ini&&b.ini.ts)||0));},
+      .slice().sort((a,b)=>{const x=this.colKey(a,this.colCol),y=this.colKey(b,this.colCol);
+        let c=typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR',{numeric:true});
+        if(c===0)c=((a.ini&&a.ini.ts)||0)-((b.ini&&b.ini.ts)||0);return this.colOrd==='desc'?-c:c;});},
+    /* ordenar clicando no cabeçalho da coluna: 1º clique crescente, 2º decrescente */
+    colOrdenar(c){if(this.colCol===c)this.colOrd=this.colOrd==='asc'?'desc':'asc';else{this.colCol=c;this.colOrd='asc';}},
+    colSeta(c){return this.colCol===c?(this.colOrd==='asc'?'↑':'↓'):'↑';},
+    colKey(r,c){if(c==='ini')return(r.ini&&r.ini.ts)||0;if(c==='peso'||c==='vei')return+r[c]||0;
+      if(c==='pass'){const d=this.colDT(r.pass);return d?d.ts:0;}return String(r[c]==null?'':r[c]).toLowerCase();},
+    get colPivDir(){return this.colCol==='ini'?this.colOrd:'asc';},
     get colTot(){return this.coletasF.reduce((a,r)=>{a.p+=+r.peso||0;a.v+=+r.vei||0;return a;},{p:0,v:0});},
     colPeso(v){return(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3});},
     /* TABELAS DINÂMICAS (sobre as coletas filtradas): 1) Fila > Data  2) só por Data (sem material) */
-    get colPivotFila(){const g={};this.coletasF.forEach(r=>{const d=r.ini?r.ini.iso:'',a=g[r.fila]||(g[r.fila]={fila:r.fila,p:0,v:0,m:{}}),b=a.m[d]||(a.m[d]={iso:d,p:0,v:0});
+    colTemPass(r){const t=String(r.pass==null?'':r.pass).trim();return t!==''&&t!=='-';},
+    get colPivotBase(){return this.coletasF.filter(r=>!this.colTemPass(r));},
+    get colPassN(){return this.coletasF.length-this.colPivotBase.length;},
+    get colTotPiv(){return this.colPivotBase.reduce((a,r)=>{a.p+=+r.peso||0;a.v+=+r.vei||0;return a;},{p:0,v:0});},
+    get colPivotFila(){const g={};this.colPivotBase.forEach(r=>{const d=r.ini?r.ini.iso:'',a=g[r.fila]||(g[r.fila]={fila:r.fila,p:0,v:0,m:{}}),b=a.m[d]||(a.m[d]={iso:d,p:0,v:0});
         a.p+=+r.peso||0;a.v+=+r.vei||0;b.p+=+r.peso||0;b.v+=+r.vei||0;});
-      return Object.values(g).sort((x,y)=>x.fila<y.fila?-1:1).map(a=>({fila:a.fila,p:a.p,v:a.v,datas:Object.values(a.m).sort((x,y)=>x.iso<y.iso?-1:1)}));},
+      return Object.values(g).sort((x,y)=>x.fila<y.fila?-1:1).map(a=>({fila:a.fila,p:a.p,v:a.v,datas:Object.values(a.m).sort((x,y)=>(this.colPivDir==='desc'?-1:1)*(x.iso<y.iso?-1:1))}));},
     get colPivotFilaRows(){const o=[];this.colPivotFila.forEach(a=>{o.push({k:'g'+a.fila,g:true,l:a.fila,p:a.p,v:a.v});a.datas.forEach(d=>o.push({k:'d'+a.fila+'|'+d.iso,g:false,l:d.iso?this.fmtDateBR(d.iso):'(sem data)',p:d.p,v:d.v}));});return o;},
-    get colPivotData(){const m={};this.coletasF.forEach(r=>{const d=r.ini?r.ini.iso:'',b=m[d]||(m[d]={iso:d,p:0,v:0});b.p+=+r.peso||0;b.v+=+r.vei||0;});
-      return Object.values(m).sort((x,y)=>x.iso<y.iso?-1:1);},
+    get colPivotData(){const m={};this.colPivotBase.forEach(r=>{const d=r.ini?r.ini.iso:'',b=m[d]||(m[d]={iso:d,p:0,v:0});b.p+=+r.peso||0;b.v+=+r.vei||0;});
+      return Object.values(m).sort((x,y)=>(this.colPivDir==='desc'?-1:1)*(x.iso<y.iso?-1:1));},
     colPeso2(v){return(+v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});},
     /* relatório: aba 1 = Fila > Data; aba 2 = só por Data (sem material) */
     async exportRelatorioColetas(){
-      const rows=this.coletasF;if(!rows.length){this.msg('Não há coletas para exportar.');return;}
+      const rows=this.colPivotBase;if(!rows.length){this.msg('Não há coletas (sem conclusão de passaporte) para exportar.');return;}
       let X;try{X=await this.carregarExcelJS();}catch(e){this.msg('Não foi possível gerar o Excel agora.');return;}
       try{
         const wb=new X.Workbook();
@@ -1111,7 +1124,7 @@ function sys(){
           const put=(vals,o)=>{const row=ws.addRow(vals);row.eachCell((c,j)=>{c.border=bd;c.font={name:'Arial',size:11,bold:!!o.bold,color:{argb:o.color||'FF000000'}};if(o.fill)c.fill=fill(o.fill);
             if(j>1){c.alignment={horizontal:'right'};c.numFmt=j===2?'#,##0.00':'0';}else c.alignment={horizontal:o.center?'center':'left'};});return row;};
           put([cab,'Soma de peso','Soma de veículos'],{bold:true,fill:'F2F2F2'});ws.views=[{state:'frozen',ySplit:1}];return put;};
-        const T=this.colTot,dt=iso=>iso?this.fmtDateBR(iso):'(sem data)';
+        const T=this.colTotPiv,dt=iso=>iso?this.fmtDateBR(iso):'(sem data)';
         const p1=mk('Relatório','Agendados/Confirmados');
         this.colPivotFila.forEach(a=>{p1([a.fila,+a.p.toFixed(2),a.v],{bold:true,fill:'9DC3E6'});a.datas.forEach(d=>p1([dt(d.iso),+d.p.toFixed(2),d.v],{center:true}));});
         p1(['Total Geral',+T.p.toFixed(2),T.v],{bold:true,fill:'BDD7EE',color:'FFC00000'});
