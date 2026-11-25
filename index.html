@@ -62,6 +62,7 @@
 <symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></symbol>
 <symbol id="i-trending-down" viewBox="0 0 24 24"><path d="m22 17-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></symbol>
 <symbol id="i-truck" viewBox="0 0 24 24"><path d="M1 3h13v13H1zM14 8h4l4 4v4h-8"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
 <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
 <symbol id="i-alert-triangle" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
@@ -438,7 +439,10 @@
         <template x-for="(w,k) in weeksList" :key="w"><option :value="k" x-text="weekLabel(w)"></option></template>
       </select>
       <button @click="nextWeek()" class="px-3 py-2 border border-stone-300 rounded-lg hover:bg-stone-50 text-sm font-semibold">›</button>
-      <button @click="exportDemanda()" class="ml-auto px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>Exportar Excel</button>
+      <div class="ml-auto flex flex-wrap gap-2">
+        <button @click="copiarEmail()" class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition" title="Copia o texto e a tabela desta mina para colar no corpo do e-mail" ><svg class="ic"><use href="#i-mail"/></svg>Copiar para e-mail</button>
+        <button @click="exportDemanda()" class="px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg flex items-center gap-1.5 text-sm font-semibold transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>Exportar Excel</button>
+      </div>
     </div>
     <div class="bg-white rounded-xl border border-stone-200 shadow-sm overflow-auto">
       <table class="border-collapse tbl-prog w-full text-sm">
@@ -467,6 +471,10 @@
       </table>
     </div>
     <p class="text-xs text-stone-500 px-1" x-text="unid==='sossego'?'Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. No Sossego todo o volume é da Transul.':'Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. Transul carrega 70% e FAM 30% do total semanal de veículos de Salobo, arredondado e distribuído nos dias.'">Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. Transul carrega 70% e FAM 30% do total semanal de veículos de Salobo, arredondado e distribuído nos dias.</p>
+    <details class="bg-white rounded-xl border border-stone-200 shadow-sm">
+      <summary class="px-4 py-3 cursor-pointer text-sm font-semibold text-stone-700 select-none">Pré-visualização do e-mail (<span x-text="unNome"></span>) — é isto que o botão <b>Copiar para e-mail</b> copia</summary>
+      <div class="p-4 border-t border-stone-200 overflow-auto" x-html="emailDemanda.html"></div>
+    </details>
   </section>
 
   <!-- ================= CONFIG ================= -->
@@ -1220,6 +1228,60 @@ function sys(){
       const rows=[R(this.unNome,'Denso (ton aprox.)',d=>d.vD*50),R('','Poroso (ton aprox.)',d=>d.vP*50),R('','Denso (Qtd veículos)',d=>d.vD),R('','Poroso (Qtd veículos)',d=>d.vP),
         ...(so?[R('TRANSUL','Denso',d=>d.tD),R('','Poroso',d=>d.tP)]:[R('TRANSUL 70%','Denso',d=>d.tD),R('','Poroso',d=>d.tP),R('FAM 30%','Denso',d=>d.fD),R('','Poroso',d=>d.fP)])];
       rows.forEach(r=>{r.t=r.v.reduce((a,b)=>a+b,0);});return {dias,rows};},
+    /* ================= E-MAIL DA DEMANDA (Salobo + Sossego) ================= */
+    /* dias de uma unidade, mesmo quando ela não é a que está aberta (usa o último dado sincronizado) */
+    diasUn(u){if(u===this.unid)return this.dias;
+      const sn=u==='sossego'?this._sosSnap:this._salSnap;let o=null;try{o=sn&&sn.exists?sn.data():null;}catch(e){}
+      return Object.values((o&&o.days)||{}).filter(v=>v&&v.iso).map(v=>({iso:v.iso,D:this.norm(v.D),P:this.norm(v.P)}));},
+    semanaUn(u){const s=this.selectedWeek;if(!s)return[];const L=this.diasUn(u);
+      return[0,1,2,3,4,5,6].map(k=>{const iso=this.addDays(s,k),d=L.find(x=>x.iso===iso);return{iso,vD:d?this.vei(d.D[2]):0,vP:d?this.vei(d.P[2]):0};});},
+    get emailDemanda(){
+      const s=this.selectedWeek;if(!s)return{html:'',texto:'',per:''};
+      const f=x=>this.fmtDateBR(x).slice(0,5),per=f(s)+' a '+f(this.addDays(s,6)),N=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+      const W=this.semanaUn(this.unid),NOME=this.unid==='sossego'?'Sossego':'Salobo',sum=a=>a.reduce((x,y)=>x+y,0),K=[0,1,2,3,4,5,6];
+      const vD=K.map(k=>W[k].vD),vP=K.map(k=>W[k].vP),vT=K.map(k=>vD[k]+vP[k]);
+      const vc=n=>n+(n===1?' veículo':' veículos'),tD=sum(vD),tP=sum(vP),tV=tD+tP,hr=new Date().getHours(),sau=hr<12?'Bom dia':hr<18?'Boa tarde':'Boa noite';
+      const B='border:1px solid #000;padding:3px 6px;font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;';
+      const TEAL='background:#008080;color:#fff;font-weight:bold;text-align:center;',GRAY='background:#7F7F7F;color:#fff;font-weight:bold;text-align:center;';
+      const td=(t,st,ex)=>'<td '+(ex||'')+' style="'+B+(st||'')+'">'+t+'</td>';
+      const sp='<tr><td colspan="10" style="border:0;padding:0;height:8px;line-height:8px;font-size:1px;">&nbsp;</td></tr>';
+      const head='<tr>'+td('<b style="color:#C55A11;font-size:12pt;">DEMANDA NITRATO VALE</b><br><span style="color:#7F7F7F;font-size:9pt;">'+per+'</span>','text-align:center;','colspan="2" rowspan="2"')
+        +N.map(n=>td(n,TEAL)).join('')+td('TOTAL',GRAY+'font-size:12pt;','rowspan="2"')+'</tr><tr>'+K.map(k=>td(f(this.addDays(s,k)),TEAL)).join('')+'</tr>';
+      const bloco=(nome,W)=>[['Denso (ton aprox.)',W.map(d=>d.vD*50)],['Poroso (ton aprox.)',W.map(d=>d.vP*50)],['Denso (Qtd veículos)',W.map(d=>d.vD)],['Poroso (Qtd veículos)',W.map(d=>d.vP)]]
+        .map((r,i)=>'<tr>'+(i===0?td(nome,TEAL+'font-size:12pt;','rowspan="4"'):'')+td(r[0],'text-align:right;white-space:nowrap;')+r[1].map(v=>td(v?v:'-','text-align:center;')).join('')+td(sum(r[1]),GRAY)+'</tr>').join('');
+      const res=(l,a)=>'<tr>'+td(l,'background:#D9D9D9;text-align:center;white-space:nowrap;','colspan="2"')+a.map(v=>td(v?v:'-','text-align:center;')).join('')+td(sum(a),GRAY)+'</tr>';
+      const hd=t=>'<tr>'+td(t,'background:#7F7F7F;color:#fff;font-weight:bold;text-align:center;','colspan="10"')+'</tr>';
+      const obs='<b>1)</b> Nos contratos de transporte trabalhamos com 4 tipos de veículos e cada mina da Vale tem suas restrições para recebimento de determinados tipos de veículos, <b>por isso informamos nessa programação a quantidade aproximada de toneladas por veículo (com sobra para evitar problemas de saldo no sistema YARA)</b> e estamos informando também a quantidade total de veículos a serem carregados, esse número de veículos que é a demanda real passada a transportadora e que precisamos que seja atendida totalmente, não determinamos o veículo a ser utilizado. Segue para conhecimento:<br><br>'
+        +'- Cargas para Salobo pode ser rodotrem (aprox 4 ton) e síder utilizado como backup;<br>- Cargas para Carajás pode ser Sider (aprox 30 ton), Carreta com eixos espaçados (aprox 34 ton), Bitrem (aprox 36 ton), Rodotrem (aprox 47 ton);<br>- Cargas para S11D pode ser Bitrem (aprox 36 ton), Rodotrem (aprox 47 ton);<br>- Cargas para SOSSEGO pode ser Bitrem (aprox 36 ton), Rodotrem (aprox 47 ton);<br>- Cargas para ITABIRA é Sider (aprox 30 ton);<br>- Cargas para ITABIRITO é Carreta com eixos espaçados (aprox 34 ton) e Sider (aprox 30 ton) como backup.<br><br>'
+        +'<b>2)</b> Essa programação é revisada e enviada semanalmente à YARA, sempre no final da semana corrente, confirmando a programação da semana seguinte e dando apenas uma previsibilidade do restante do mês.';
+      const tab='<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:720px;font-family:Calibri,Arial,sans-serif;font-size:11pt;">'
+        +head+bloco(this.unNome,W)+sp
+        +hd('RESUMO TOTAL DO PEDIDO')+res('Denso + Poroso (Ton aprox.)',vT.map(v=>v*50))+res('Denso + Poroso (Qtd veículos)',vT)+sp
+        +res('Denso (Ton aprox.)',vD.map(v=>v*50))+res('Denso (Qtd veículos)',vD)+sp+res('Poroso (Ton aprox.)',vP.map(v=>v*50))+res('Poroso (Qtd veículos)',vP)
+        +hd('OBSERVAÇÕES')+'<tr>'+td(obs,'text-align:left;vertical-align:top;font-size:10pt;','colspan="10"')+'</tr></table>';
+      const cab='<p style="margin:0 0 10px 0;">'+sau+'!</p><p style="margin:0 0 10px 0;">Segue programação de coleta de '+NOME+' no período de '+per+'.</p>'
+        +'<p style="margin:0 0 6px 0;">Total geral: '+vc(tV)+' / '+tV*50+' Toneladas</p>'
+        +'<ul style="margin:0 0 14px 0;"><li>Nitrato Denso: '+vc(tD)+' / '+tD*50+' toneladas</li><li>Nitrato Poroso: '+vc(tP)+' / '+tP*50+' toneladas</li></ul>';
+      const lin=(n,W)=>n+' - Denso (veíc.): '+W.map(d=>d.vD).join(' | ')+'  /  Poroso (veíc.): '+W.map(d=>d.vP).join(' | ');
+      const texto=sau+'!\nSegue programação de coleta de '+NOME+' no período de '+per+'.\n\nTotal geral: '+vc(tV)+' / '+tV*50+' Toneladas\n\n· Nitrato Denso: '+vc(tD)+' / '+tD*50+' toneladas\n· Nitrato Poroso: '+vc(tP)+' / '+tP*50+' toneladas\n\n'+N.map((n,k)=>n+' '+f(this.addDays(s,k))).join(' | ')+'\n'+lin(this.unNome,W)+'\n';
+      return{per,texto,html:'<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;">'+cab+tab+'</div>'};
+    },
+    /* copia o texto + a tabela (HTML) para colar direto no corpo do e-mail (Outlook, Gmail...) */
+    async copiarEmail(){
+      const E=this.emailDemanda;if(!E.html){this.msg('Escolha uma semana para copiar.');return;}
+      try{
+        if(navigator.clipboard&&window.ClipboardItem){
+          await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([E.html],{type:'text/html'}),'text/plain':new Blob([E.texto],{type:'text/plain'})})]);
+          this.msg('E-mail copiado. Cole no corpo da mensagem (Ctrl+V).');return;}
+        throw new Error('sem ClipboardItem');
+      }catch(e){
+        try{const div=document.createElement('div');div.contentEditable='true';div.style.cssText='position:fixed;left:-9999px;top:0;background:#fff;';div.innerHTML=E.html;document.body.appendChild(div);
+          const r=document.createRange();r.selectNodeContents(div);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
+          const ok=document.execCommand('copy');sel.removeAllRanges();document.body.removeChild(div);
+          this.msg(ok?'E-mail copiado. Cole no corpo da mensagem (Ctrl+V).':'Não consegui copiar automaticamente. Use a pré-visualização: selecione e copie.');
+        }catch(e2){this.msg('Não consegui copiar automaticamente. Use a pré-visualização: selecione e copie.');}
+      }
+    },
     async exportDemanda(){
       let X;try{X=await this.carregarExcelJS();}catch(e){this.msg('Não foi possível gerar o Excel agora.');return;}
       try{
