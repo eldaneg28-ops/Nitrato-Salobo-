@@ -74,11 +74,13 @@
     <div class="flex items-center gap-3">
       <div class="bg-emerald-600 text-white p-2.5 rounded-lg"><svg class="ic"><use href="#i-factory"/></svg></div>
       <div>
-        <h1 class="text-lg font-bold leading-tight">Programação de Nitrato - SALOBO</h1>
+        <h1 class="text-lg font-bold leading-tight" x-text="'Programação de Nitrato - '+unNome">Programação de Nitrato - SALOBO</h1>
         <p class="text-xs text-stone-500">Hoje: <span x-text="fmtDateBR(todayISO)"></span> · <span :class="syncTxt==='Sincronizado'?'text-emerald-600':'text-amber-600'" x-text="syncTxt"></span> · <span x-text="cloud?'salvo na nuvem — todos que abrirem o link veem as mesmas informações':'salvo só neste navegador (sem nuvem)'"></span><span x-show="readOnly" class="ml-1 font-bold text-red-600"> · SOMENTE LEITURA (peça acesso de colaborador)</span></p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2 text-xs font-semibold">
+      <button x-show="unid==='salobo'" @click="trocarUnidade('sossego')" :disabled="!ref" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center gap-1.5 transition disabled:opacity-50" title="Abrir a Programação e a Demanda de nitrato do Sossego"><svg class="ic"><use href="#i-factory"/></svg>Sossego</button>
+      <button x-show="unid==='sossego'" @click="trocarUnidade('salobo')" :disabled="!ref" class="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg flex items-center gap-1.5 transition disabled:opacity-50" title="Voltar para a visão completa do Salobo"><svg class="ic"><use href="#i-chevron-left"/></svg>Voltar ao Salobo</button>
       <label class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg flex items-center gap-1.5 transition cursor-pointer" :class="impBusy?'opacity-60 pointer-events-none':''" title="Escolha a planilha Programação_Nitrato (.xlsm/.xlsx) para preencher consumo, estoque e fila automaticamente"><svg class="ic"><use href="#i-upload"/></svg><span x-text="impBusy?'Lendo planilha…':'Carregar planilha'"></span><input type="file" accept=".xlsx,.xlsm,.xls" class="hidden" @change="importarPlanilha($event)"></label>
       <button @click="exportExcel()" class="px-3 py-2 bg-green-700 hover:bg-green-800 text-white rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>Baixar Excel</button>
       <button @click="exportCSV()" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg flex items-center gap-1.5 transition"><svg class="ic"><use href="#i-file-spreadsheet"/></svg>CSV</button>
@@ -96,7 +98,7 @@
 
   <!-- TABS -->
   <nav class="flex gap-1 bg-white rounded-xl border border-stone-200 p-1 shadow-sm text-sm font-semibold">
-    <template x-for="t in [['painel','Painel','layout-dashboard'],['prog','Programação','calendar-days'],['coletas','Coletas agendadas','truck'],['demanda','Demanda de nitrato','file-spreadsheet'],['config','Config','settings']]" :key="t[0]">
+    <template x-for="t in abas" :key="t[0]">
       <button @click="setTab(t[0])" class="px-4 py-2 rounded-lg flex items-center gap-2 transition"
         :class="tab===t[0] ? 'bg-emerald-600 text-white shadow' : 'text-stone-600 hover:bg-stone-100'">
         <svg class="ic"><use :href="'#i-'+t[2]"/></svg><span x-text="t[1]"></span>
@@ -464,7 +466,7 @@
         </tbody>
       </table>
     </div>
-    <p class="text-xs text-stone-500 px-1">Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. Transul carrega 70% e FAM 30% do total semanal de veículos de Salobo, arredondado e distribuído nos dias.</p>
+    <p class="text-xs text-stone-500 px-1" x-text="unid==='sossego'?'Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. No Sossego todo o volume é da Transul.':'Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. Transul carrega 70% e FAM 30% do total semanal de veículos de Salobo, arredondado e distribuído nos dias.'">Os veículos vêm da Entrega Planejada da Programação, com 47 t por veículo. Na planilha, as toneladas usam 50 t por veículo. Transul carrega 70% e FAM 30% do total semanal de veículos de Salobo, arredondado e distribuído nos dias.</p>
   </section>
 
   <!-- ================= CONFIG ================= -->
@@ -513,12 +515,12 @@
     finally{busy=false;}};
   const sub=(cb,er)=>{const s={cb,er};subs.push(s);if(lastAll)cb(lastAll);if(!timer){timer=setInterval(tick,15000);if(typeof document!=='undefined')document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});}tick();return()=>{const i=subs.indexOf(s);if(i>=0)subs.splice(i,1);};};
   const fbDb={
-    collection(n){return{
-      onSnapshot(cb,er){return sub(all=>cb({docs:all.filter(x=>x[0]!=='cfg').map(x=>({id:x[0],data:()=>x[1]}))}),er);},
-      doc(id){return{set:v=>put(id,v),delete:()=>del(id)};}};},
-    doc(){return{
-      onSnapshot(cb,er){return sub(all=>{const c=all.find(x=>x[0]==='cfg');cb({exists:!!c,data:()=>c?c[1]:{}});},er);},
-      set:v=>put('cfg',v)};}
+    collection(n){const P=n==='sossego';return{
+      onSnapshot(cb,er){return sub(all=>cb({docs:all.filter(x=>P?(x[0].indexOf('sos_')===0&&x[0]!=='sos_cfg'):(x[0]!=='cfg'&&x[0].indexOf('sos_')!==0)).map(x=>({id:P?x[0].slice(4):x[0],data:()=>x[1]}))}),er);},
+      doc(id){const k=P?'sos_'+id:id;return{set:v=>put(k,v),delete:()=>del(k)};}};},
+    doc(path){const cid=/sossego/.test(String(path||''))?'sos_cfg':'cfg';return{
+      onSnapshot(cb,er){return sub(all=>{const c=all.find(x=>x[0]===cid);cb({exists:!!c,data:()=>c?c[1]:{}});},er);},
+      set:v=>put(cid,v)};}
   };
   const aviso=e=>{const c=(e&&e.code)||'erro',m={permission_denied:'o Firestore bloqueou o acesso: publique as regras de segurança',not_found:'o banco Firestore ainda não foi criado neste projeto',timeout:'a conexão demorou demais',unavailable:'sem conexão com o Firebase',invalid_argument:'chave de API inválida'}[c]||('erro: '+c);
     const d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#fef3c7;color:#78350f;font:13px system-ui,sans-serif;padding:8px 12px;text-align:center;border-top:1px solid #f59e0b';
@@ -540,7 +542,7 @@ function sys(){
   const isoOf=dt=>dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
   const memo={ver:-1,fk:'',D:null,P:null,F:null,Df:null,Pf:null,pr:null};
   return {
-    cloud:false, imp:null, impBusy:false, coletas:[], colSel:{}, colOrd:'asc', colCol:'ini', colPesoFixo:47, colFile:'', colAt:'', colBusy:false, colSem:'todas', colMat:'todos', colSt:'todos', colMsg:'', _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
+    cloud:false, unid:'salobo', _salRef:null, _sosRef:null, _salSnap:null, _sosSnap:null, _fromSos:false, imp:null, impBusy:false, coletas:[], colSel:{}, colOrd:'asc', colCol:'ini', colPesoFixo:47, colFile:'', colAt:'', colBusy:false, colSem:'todas', colMat:'todos', colSt:'todos', colMsg:'', _ver:0, filtroSemana:'todas', novoRole:'ver', emailMsg:'', novoEmail:'', emailRole:'ver', emailErr:'', myEmail:null, roPlat:false, roAcl:false, isAdm:false, uid:null, userNs:null, aclDoc:null, acl:{padrao:'editar',ver:[],editar:[],emails:[]}, aclOpen:false, addOpen:false, visitantes:[], busca:[], buscaQ:'', perfis:{}, shareOpen:false, shareLink:'https://claude.ai/artifact/Bir95QUBmuMF5mXmPcoYHs', tab:'painel', novoDia:'', novoDe:'', novoAte:'', toast:'', charts:{},
     cfg:{eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120},
     dias:[],
     selectedWeek:'', weekSel:0, ref:null, pend:{}, cfgDirty:false, syncTxt:'Carregando…', _seq:0, _cseq:0, _saving:false,
@@ -617,9 +619,19 @@ function sys(){
         async update(u){if(u.cfg)await wrap(()=>cfgD.set({...u.cfg}));if(u.days)for(const k in u.days){const v=u.days[k];await wrap(()=>v===null?daysC.doc(k).delete():daysC.doc(k).set(v));}},
         async set(o){await wrap(()=>cfgD.set({...o.cfg}));for(const k in o.days)await wrap(()=>daysC.doc(k).set(o.days[k]));}
       };
+      this._salRef=this.ref;
       const push=()=>{if(!gotD)return;this.onRemote({exists:true,data:()=>({cfg:st.cfg,days:st.days})});if(!Object.keys(st.days).length)this.syncTxt='Nuvem vazia';};
       cfgD.onSnapshot(sn=>{if(sn.exists){st.cfg={...sn.data()};push();}},()=>{});
       daysC.onSnapshot(sn=>{const m={};sn.docs.forEach(d=>{m[d.id]=d.data();});st.days=m;gotD=true;push();},()=>{this.syncTxt='Sem acesso à nuvem';});
+      /* ---- SOSSEGO: dados próprios (coleção 'sossego' / config 'sossego'), separados do Salobo ---- */
+      const sosC=db.collection('sossego'),sosCfg=db.doc('config/sossego'),sS={cfg:{},days:{}};let gotS=false;
+      this._sosRef={
+        async update(u){if(u.cfg)await wrap(()=>sosCfg.set({...u.cfg}));if(u.days)for(const k in u.days){const v=u.days[k];await wrap(()=>v===null?sosC.doc(k).delete():sosC.doc(k).set(v));}},
+        async set(o){await wrap(()=>sosCfg.set({...o.cfg}));for(const k in o.days)await wrap(()=>sosC.doc(k).set(o.days[k]));}
+      };
+      const pushS=()=>{if(!gotS)return;this._sosSnap={exists:true,data:()=>({cfg:sS.cfg,days:sS.days})};if(this.unid==='sossego'){this._fromSos=true;try{this.onRemote(this._sosSnap);}finally{this._fromSos=false;}}};
+      sosCfg.onSnapshot(sn=>{if(sn.exists){sS.cfg={...sn.data()};pushS();}},()=>{});
+      sosC.onSnapshot(sn=>{const m={};sn.docs.forEach(d=>{m[d.id]=d.data();});sS.days=m;gotS=true;pushS();},()=>{});
     },
     async initLocal(){
       const K='nitrato-salobo-v1';let st=null;
@@ -630,9 +642,19 @@ function sys(){
         async update(u){if(u.cfg)st.cfg=Object.assign(st.cfg||{},u.cfg);if(u.days)for(const k in u.days){if(u.days[k]===null)delete st.days[k];else st.days[k]=u.days[k];}save();},
         async set(o){st=o;save();}
       };
+      this._salRef=this.ref;
+      const K2='nitrato-sossego-v1';let s2=null;try{s2=JSON.parse(localStorage.getItem(K2));}catch(e){}
+      if(!s2||!s2.days)s2={cfg:{},days:{}};
+      const save2=()=>{try{localStorage.setItem(K2,JSON.stringify(s2));}catch(e){}};
+      this._sosRef={
+        async update(u){if(u.cfg)s2.cfg=Object.assign(s2.cfg||{},u.cfg);if(u.days)for(const k in u.days){if(u.days[k]===null)delete s2.days[k];else s2.days[k]=u.days[k];}save2();},
+        async set(o){s2=o;save2();}
+      };
+      this._sosSnap={exists:true,data:()=>s2};
       this.onRemote({exists:true,data:()=>st});
     },
     onRemote(snap){
+      if(this.unid==='sossego'&&!this._fromSos){this._salSnap=snap;return;}   /* atualização do Salobo enquanto está no Sossego: só guarda */
       this._lastSnap=snap;
       const o=snap.exists?snap.data():null;
       if(!o){this.syncTxt='Banco vazio';return;}
@@ -675,7 +697,7 @@ function sys(){
       return this.setAcl({padrao:a.padrao,ver,editar:ed,emails:(a.emails||[]).map(x=>x.email===e?{...x,papel}:x)});},
     delEmail(e){const a=this.acl,it=(a.emails||[]).find(x=>x.email===e);const id=it&&it.id;
       return this.setAcl({padrao:a.padrao,ver:a.ver.filter(x=>x!==id),editar:a.editar.filter(x=>x!==id),emails:(a.emails||[]).filter(x=>x.email!==e)});},
-    get mailtoHref(){const to=this.isAdm?(this.acl.emails||[]).map(x=>x.email).join(','):'';const sub='Programação de Nitrato - SALOBO';const body='Olá,\n\nSegue o link da Programação de Nitrato - SALOBO:\n'+this.shareLink+'\n\nAbra o link e entre com a sua conta do Claude.\n';return 'mailto:'+to+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body);},
+    get mailtoHref(){const to=this.isAdm?(this.acl.emails||[]).map(x=>x.email).join(','):'';const sub='Programação de Nitrato - '+this.unNome;const body='Olá,\n\nSegue o link da Programação de Nitrato - '+this.unNome+':\n'+this.shareLink+'\n\nAbra o link e entre com a sua conta do Claude.\n';return 'mailto:'+to+'?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body);},
     async setAcl(n){try{await this.aclDoc.set(n);this.msg('Acessos salvos');}catch(e){this.msg('Não foi possível salvar os acessos.');}},
     dar(id,papel){const a=this.acl,ver=a.ver.filter(x=>x!==id),ed=a.editar.filter(x=>x!==id);if(papel==='ver')ver.push(id);if(papel==='editar')ed.push(id);return this.setAcl({padrao:a.padrao,ver,editar:ed,emails:a.emails||[]});},
     setPadrao(v){const a=this.acl;return this.setAcl({padrao:v==='ver'?'ver':'editar',ver:a.ver,editar:a.editar,emails:a.emails||[]});},
@@ -854,6 +876,30 @@ function sys(){
     dmShort(iso){const[,m,d]=iso.split('-');return d+'/'+['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+m-1];},
     dowShort(iso){const[y,m,d]=iso.split('-').map(Number);return ['dom','seg','ter','qua','qui','sex','sáb'][new Date(y,m-1,d).getDay()];},
     fmtDateBR(iso){if(!iso)return'—';const[aa,mm,dd]=iso.split('-');return dd+'/'+mm+'/'+aa;},
+    get unNome(){return this.unid==='sossego'?'SOSSEGO':'SALOBO';},
+    get abas(){const T=[['painel','Painel','layout-dashboard'],['prog','Programação','calendar-days'],['coletas','Coletas agendadas','truck'],['demanda','Demanda de nitrato','file-spreadsheet'],['config','Config','settings']];
+      return this.unid==='sossego'?T.filter(t=>t[0]==='prog'||t[0]==='demanda'):T;},
+    /* alterna entre SALOBO e SOSSEGO: cada unidade tem seus próprios dias/consumos/estoque (Sossego guarda à parte) */
+    async trocarUnidade(u){
+      if(u===this.unid)return;
+      if(!this.ref||!this._sosRef||!this._salRef){this.msg('Aguarde: carregando os dados…');return;}
+      clearTimeout(this._t);for(let k=0;k<50&&this._saving;k++)await new Promise(r=>setTimeout(r,100));
+      await this.flush();
+      if(Object.keys(this.pend).length||this.cfgDirty){this.msg('Aguarde: salvando as alterações antes de trocar…');return;}
+      if(this.unid==='salobo'){this._salSnap=this._lastSnap||this._salSnap;}
+      this.unid=u;this.imp=null;this.pend={};this.cfgDirty=false;
+      if(u==='sossego'){
+        this.ref=this._sosRef;this.dias=[];this.cfg={eiD:0,eiP:0,limD:0,limP:0,cap:47,alerta:140,alertaMat:120};
+        if(this._sosSnap){this._fromSos=true;try{this.onRemote(this._sosSnap);}finally{this._fromSos=false;}}
+        this.syncTxt='Sincronizado';
+      }else{
+        this.ref=this._salRef;this.dias=[];this.cfg={eiD:546.12,eiP:236,limD:580,limP:227,cap:47,alerta:140,alertaMat:120};
+        if(this._salSnap)this.onRemote(this._salSnap);
+      }
+      this._ver++;this.selectedWeek=this.mondayOf(this.todayISO);this.syncWeekSel();
+      try{document.title='Programação de Nitrato - '+this.unNome;}catch(e){}
+      this.setTab(u==='sossego'?'prog':'painel');
+    },
     setTab(t){this.tab=t;if(t==='painel')this.$nextTick(()=>this.renderCharts());},
     renderCharts(){
       const labels=this.dias.map(d=>d.d);
@@ -910,7 +956,7 @@ function sys(){
     /* ================= PLANILHA (Programação_Nitrato.xlsm): consumo, estoque e fila da unidade SALOBO ================= */
     carregarSheetJS(){return new Promise((ok,no)=>{if(window.XLSX)return ok(window.XLSX);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>window.XLSX?ok(window.XLSX):no();sc.onerror=no;document.head.appendChild(sc);});},
     /* lê as 3 abas (linhas cruas) e devolve: consumo por dia/material, e estoque + fila de "hoje" */
-    lerPlanilha(S,hoje){
+    lerPlanilha(S,hoje,un){un=un||'salobo';
       const pad=n=>String(n).padStart(2,'0');
       const nm=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
       const num=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;let t=String(v).trim().replace(/\s/g,'');if(!t||t==='-')return null;
@@ -925,7 +971,7 @@ function sys(){
         if(di>=0&&mi>=0&&qi>=0)return{r,di,mi,ui,qi};}return null;};
       const agg=(rows,qk,modo)=>{const c=cols(rows,qk);if(!c)return null;const m={};let n=0;
         for(let r=c.r+1;r<rows.length;r++){const x=rows[r];if(!x)continue;const d=dia(x[c.di]);if(!d)continue;
-          if((c.ui>=0?nm(x[c.ui]):'salobo')!=='salobo')continue;           /* só unidade Salobo (ignora Sossego) */
+          if((c.ui>=0?nm(x[c.ui]):'salobo')!==un)continue;           /* só a unidade escolhida (Salobo ou Sossego) */
           const mt=nm(x[c.mi]),p=mt.indexOf('denso')>=0?'D':mt.indexOf('poroso')>=0?'P':null;if(!p)continue;   /* denso -> Denso, poroso -> Poroso */
           const q=num(x[c.qi]);if(q==null)continue;
           const o=m[d]||(m[d]={});o[p]=modo==='ult'?q:(o[p]||0)+q;n++;}
@@ -952,7 +998,7 @@ function sys(){
         const buf=await f.arrayBuffer();
         let wb;try{wb=X.read(buf,{type:'array',sheets:['ESTOQUES','CONSUMO','FILA','CARREGAMENTO DE MATERIAL']});}catch(e){this.imp={ok:false,titulo:'Não consegui abrir esse arquivo.',linhas:['Use a planilha Programação_Nitrato (.xlsm ou .xlsx).']};return;}
         const S={};['ESTOQUES','CONSUMO','FILA','CARREGAMENTO DE MATERIAL'].forEach(n=>{const k=wb.SheetNames.find(x=>String(x).trim().toUpperCase()===n);if(k&&wb.Sheets[k])S[n]=X.utils.sheet_to_json(wb.Sheets[k],{header:1,raw:true,defval:null});});
-        const R=this.lerPlanilha(S,this.todayISO);
+        const R=this.lerPlanilha(S,this.todayISO,this.unid);
         if(R.erros.length){this.imp={ok:false,titulo:'Planilha não preenchida.',linhas:R.erros.map(x=>'• '+x)};return;}
         const dm=iso=>this.fmtDateBR(iso).slice(0,5),L=[];
         /* 1) CONSUMO DO DIA (pela data de ENTREGA): consumo da planilha em D vai para a coluna cuja ENTREGA (coleta + 7) é D */
@@ -960,17 +1006,17 @@ function sys(){
         this.dias.forEach((d,i)=>{const e=this.addDays(d.iso,7),c=R.consumo[e];if(!c)return;let ch=false,tem=false;
           ['D','P'].forEach(p=>{if(c[p]==null)return;tem=true;const v=arred(c[p]);if(d[p][1]!==v){d[p][1]=v;ch=true;}});
           if(tem){ach++;if(!d0||e<d0)d0=e;if(!d1||e>d1)d1=e;}if(ch){mud++;this.persist(i);}});
-        L.push(ach?('Consumo executado (Salobo): '+ach+' dia(s) da planilha encontrados na programação, de '+dm(d0)+' a '+dm(d1)+' (data de entrega); '+mud+' atualizado(s).'):'Consumo: nenhuma data da planilha coincide com as datas de entrega da programação.');
+        L.push(ach?('Consumo executado ('+this.unNome+'): '+ach+' dia(s) da planilha encontrados na programação, de '+dm(d0)+' a '+dm(d1)+' (data de entrega); '+mud+' atualizado(s).'):'Consumo: nenhuma data da planilha coincide com as datas de entrega da programação.');
         /* 1b) ENTREGA EXECUTADA (aba CARREGAMENTO DE MATERIAL): soma por Data Coleta e material -> coluna da programação com essa coleta */
         if(!S['CARREGAMENTO DE MATERIAL'])L.push('Entrega executada: aba CARREGAMENTO DE MATERIAL não encontrada (nada alterado).');
-        else{const CR=this.lerCarregamento(S['CARREGAMENTO DE MATERIAL']);
+        else{const CR=this.lerCarregamento(S['CARREGAMENTO DE MATERIAL'],this.unid);
           if(!CR)L.push('Entrega executada: aba CARREGAMENTO DE MATERIAL sem as colunas Data/Material/Quantidade (nada alterado).');
           else{let a2=0,m2=0,e0='',e1='';
             this.dias.forEach((d,i)=>{const c=CR.m[d.iso];if(!c)return;let ch=false,tem=false;
               ['D','P'].forEach(p=>{if(c[p]==null)return;tem=true;const v=arred(c[p]);if(d[p][3]!==v){d[p][3]=v;ch=true;}});
               if(tem){a2++;if(!e0||d.iso<e0)e0=d.iso;if(!e1||d.iso>e1)e1=d.iso;}if(ch){m2++;this.persist(i);}});
             L.push(a2?('Entrega executada (aba CARREGAMENTO DE MATERIAL): '+a2+' dia(s) de coleta encontrados na programação, de '+dm(e0)+' a '+dm(e1)+'; '+m2+' atualizado(s).'):'Entrega executada: nenhuma Data Coleta da aba CARREGAMENTO DE MATERIAL coincide com a programação.');
-            if(CR.semQtd)L.push('Obs.: '+CR.semQtd+' linha(s) de Salobo sem quantidade válida (ex.: #REF!) foram ignoradas.');}}
+            if(CR.semQtd)L.push('Obs.: '+CR.semQtd+' linha(s) de '+this.unNome+' sem quantidade válida (ex.: #REF!) foram ignoradas.');}}
         /* 2) SALDO DO DIA = estoque do dia (aba ESTOQUES) + fila de hoje (aba FILA) */
         const h=this.dias.findIndex(d=>this.addDays(d.iso,7)===this.todayISO);let chE=false;
         const nome={D:'Denso',P:'Poroso'},tot={};
@@ -994,7 +1040,7 @@ function sys(){
       return{v:ei,txt:''};},
     /* ================= ENTREGA EXECUTADA (aba CARREGAMENTO DE MATERIAL) ================= */
     /* soma a Quantidade por Data Coleta e material (Denso/Poroso), só unidade Salobo; ASN repetida conta uma vez */
-    lerCarregamento(rows){
+    lerCarregamento(rows,un){un=un||'salobo';
       const pad=n=>String(n).padStart(2,'0');
       const nm=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
       const num=v=>{if(v==null||v==='')return null;if(typeof v==='number')return isFinite(v)?v:null;let t=String(v).trim().replace(/\s/g,'');if(!t||t==='-')return null;
@@ -1011,7 +1057,7 @@ function sys(){
       if(!c)return null;
       const m={},seen=new Set();let n=0,semQtd=0;
       for(let r=c.r+1;r<rows.length;r++){const x=rows[r];if(!x)continue;const d=dia(x[c.di]);if(!d)continue;
-        if((c.ui>=0?nm(x[c.ui]):'salobo')!=='salobo')continue;
+        if((c.ui>=0?nm(x[c.ui]):'salobo')!==un)continue;
         const mt=nm(x[c.mi]),p=mt.indexOf('denso')>=0?'D':mt.indexOf('poroso')>=0?'P':null;if(!p)continue;
         if(c.ai>=0){const a=String(x[c.ai]==null?'':x[c.ai]).trim();if(a){if(seen.has(a))continue;seen.add(a);}}
         const q=num(x[c.qi]);if(q==null){semQtd++;continue;}
@@ -1160,15 +1206,19 @@ function sys(){
     get demanda(){const s=this.selectedWeek;if(!s)return {dias:[],rows:[]};
       const dias=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((n,k)=>{const iso=this.addDays(s,k),d=this.dias.find(x=>x.iso===iso);
         const vD=d?this.vei(d.D[2]):0,vP=d?this.vei(d.P[2]):0;return {iso,n,vD,vP,tD:0,tP:0,fD:0,fP:0};});
+      const so=this.unid==='sossego';
+      if(so){dias.forEach(d=>{d.tD=d.vD;d.fD=0;d.tP=d.vP;d.fP=0;});}   /* Sossego: 100% Transul, sem FAM */
+      else{
       const it=[];dias.forEach((d,k)=>{it.push({d,p:'D',o:k*2,v:d.vD});it.push({d,p:'P',o:k*2+1,v:d.vP});});
       const T=it.reduce((a,x)=>a+x.v,0),alvo=Math.round(+(T*0.7).toFixed(6));
       it.forEach(x=>{const ideal=x.v*0.7+1e-9;x.b=Math.floor(ideal);x.fr=ideal-x.b;});
       let r=alvo-it.reduce((a,x)=>a+x.b,0);
       [...it].sort((a,b)=>b.fr-a.fr||a.o-b.o).forEach(x=>{if(r>0&&x.v>0&&x.fr>1e-6){x.b++;r--;}});
       it.forEach(x=>{if(x.p==='D'){x.d.tD=x.b;x.d.fD=x.v-x.b;}else{x.d.tP=x.b;x.d.fP=x.v-x.b;}});
+      }
       const R=(g,l,f)=>({g,l,v:dias.map(f)});
-      const rows=[R('SALOBO','Denso (ton aprox.)',d=>d.vD*50),R('','Poroso (ton aprox.)',d=>d.vP*50),R('','Denso (Qtd veículos)',d=>d.vD),R('','Poroso (Qtd veículos)',d=>d.vP),
-        R('TRANSUL 70%','Denso',d=>d.tD),R('','Poroso',d=>d.tP),R('FAM 30%','Denso',d=>d.fD),R('','Poroso',d=>d.fP)];
+      const rows=[R(this.unNome,'Denso (ton aprox.)',d=>d.vD*50),R('','Poroso (ton aprox.)',d=>d.vP*50),R('','Denso (Qtd veículos)',d=>d.vD),R('','Poroso (Qtd veículos)',d=>d.vP),
+        ...(so?[R('TRANSUL','Denso',d=>d.tD),R('','Poroso',d=>d.tP)]:[R('TRANSUL 70%','Denso',d=>d.tD),R('','Poroso',d=>d.tP),R('FAM 30%','Denso',d=>d.fD),R('','Poroso',d=>d.fP)])];
       rows.forEach(r=>{r.t=r.v.reduce((a,b)=>a+b,0);});return {dias,rows};},
     async exportDemanda(){
       let X;try{X=await this.carregarExcelJS();}catch(e){this.msg('Não foi possível gerar o Excel agora.');return;}
@@ -1185,7 +1235,8 @@ function sys(){
         dm.dias.forEach((d,k)=>{const c=c2[k];
           w2.getCell(c+'2').value=dts[k];w2.getCell(c+'3').value=d.vD||null;w2.getCell(c+'4').value=d.vP||null;
           w2.getCell(c+'10').value=d.vD?d.tD:null;w2.getCell(c+'11').value=d.vP?d.tP:null;
-          w2.getCell(c+'17').value={formula:'IF('+c+'3=0,"",'+c+'3-'+c+'10)'};w2.getCell(c+'18').value={formula:'IF('+c+'4=0,"",'+c+'4-'+c+'11)'};});
+          if(this.unid==='sossego'){w2.getCell(c+'17').value=null;w2.getCell(c+'18').value=null;}
+          else{w2.getCell(c+'17').value={formula:'IF('+c+'3=0,"",'+c+'3-'+c+'10)'};w2.getCell(c+'18').value={formula:'IF('+c+'4=0,"",'+c+'4-'+c+'11)'};}});
         wb.calcProperties=Object.assign(wb.calcProperties||{},{fullCalcOnLoad:true});
         const buf=await wb.xlsx.writeBuffer();
         await this.baixar(buf,'Demanda de nitrato.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -1203,7 +1254,7 @@ function sys(){
         ws.getColumn(1).width=26;ws.getColumn(2).width=7;for(let c=3;c<=nc;c++)ws.getColumn(c).width=12;
         const hoje=di.map(i=>this.dias[i].iso===this.todayISO);
         // título
-        ws.mergeCells(1,1,1,nc);const t=ws.getCell(1,1);t.value='Programação de Nitrato - SALOBO · '+this.weekLabel(w);t.font={bold:true,size:12};t.alignment={vertical:'middle'};ws.getRow(1).height=22;
+        ws.mergeCells(1,1,1,nc);const t=ws.getCell(1,1);t.value='Programação de Nitrato - '+this.unNome+' · '+this.weekLabel(w);t.font={bold:true,size:12};t.alignment={vertical:'middle'};ws.getRow(1).height=22;
         // COLETA / ENTREGA
         const cab=(r,rot,bg,fg,fn)=>{const a=ws.getCell(r,1);a.value=rot;a.fill=fill(bg);a.font={bold:true,color:{argb:argb(fg)}};a.border=bd;const b=ws.getCell(r,2);b.fill=fill(bg);b.border=bd;
           di.forEach((i,j)=>{const c=ws.getCell(r,3+j);c.value=fn(this.dias[i].iso);c.fill=fill(hoje[j]&&r===3?'bae6fd':bg);c.font={bold:true,color:{argb:argb(fg)}};c.alignment={horizontal:'center'};c.border=bd;});};
@@ -1230,7 +1281,7 @@ function sys(){
         this.netF.forEach((v,j)=>{const c=ws.getCell(r,3+j);c.value=(v==null||isNaN(v))?null:+v;c.numFmt='0';c.alignment={horizontal:'right'};c.border=a.border;c.font={bold:true,color:{argb:+v<0?'FFDC2626':'FF292524'}};if(hoje[j])c.fill=fill('e0f2fe');});
       });
       this.selectedWeek=atual;this.syncWeekSel();
-      try{const buf=await wb.xlsx.writeBuffer();await this.baixar(buf,'programacao-nitrato-salobo.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');}
+      try{const buf=await wb.xlsx.writeBuffer();await this.baixar(buf,'programacao-nitrato-'+this.unNome.toLowerCase()+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');}
       catch(e){this.msg('Não foi possível gerar o Excel. Use o botão CSV.');}
     },
     async exportCSV(){
@@ -1248,7 +1299,7 @@ function sys(){
         out.push(['NET TOTAL','t'].concat(this.netF.map(v=>this.fmt(v))));
       });
       this.selectedWeek=atual;this.syncWeekSel();
-      await this.baixar('\ufeff'+out.map(l=>l.map(esc).join(';')).join('\r\n'),'programacao-nitrato-salobo.csv');
+      await this.baixar('\ufeff'+out.map(l=>l.map(esc).join(';')).join('\r\n'),'programacao-nitrato-'+this.unNome.toLowerCase()+'.csv');
     },
     async baixar(txt,nome,tipo){try{const d=await window.claude.use('downloads');if(d){await d.save({filename:nome,data:txt});this.msg('Arquivo pronto: '+nome);return;}}catch(e){if(e&&e.code==='declined')return;}this.dl(txt,nome,tipo||'text/csv');},
     dl(txt,nome,tipo){const b=new Blob([txt],{type:tipo});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nome;a.click();URL.revokeObjectURL(a.href);this.msg('Arquivo gerado: '+nome);},
